@@ -11,3 +11,4 @@ clap = { version = "4.0.18", features = ["derive"] }
 
 wolfram-app-discovery = "0.3.0"
 wstp = "0.2.4"
+wolfram-expr = "0.1.2"
