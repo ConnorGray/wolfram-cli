@@ -1,3 +1,6 @@
+mod print_all_help;
+
+
 use std::{
 	str::FromStr,
 	sync::atomic::{self, AtomicU8},
@@ -37,6 +40,12 @@ enum Command {
 	/// Subcommands for creating, modifying, and querying paclets.
 	#[command(subcommand)]
 	Paclet(PacletCommand),
+
+	#[clap(hide = true)]
+	PrintAllHelp {
+		#[clap(long)]
+		markdown: bool,
+	},
 }
 
 #[derive(Debug)]
@@ -82,6 +91,7 @@ fn main() {
 
 	match command {
 		Command::Paclet(paclet_command) => handle_paclet_command(paclet_command),
+		Command::PrintAllHelp { markdown } => print_all_help::print_all_help(markdown),
 	}
 }
 
