@@ -53,6 +53,7 @@ enum Command {
 enum PacletCommand {
 	/// Create a new paclet in the current directory with the specified name.
 	New {
+		/// Name of the paclet
 		name: String,
 		#[arg(
 			long = "base",
