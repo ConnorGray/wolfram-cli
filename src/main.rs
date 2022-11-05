@@ -1,4 +1,7 @@
-use std::str::FromStr;
+use std::{
+	str::FromStr,
+	sync::atomic::{self, AtomicU8},
+};
 
 use clap::Parser;
 
@@ -47,6 +50,18 @@ enum PacletCommand {
 }
 
 //==========================================================
+// State
+//==========================================================
+
+static VERBOSITY: AtomicU8 = AtomicU8::new(0);
+
+/// Get the verbosity value specified by the command-line invocation of this
+/// program.
+fn verbosity() -> u8 {
+	VERBOSITY.load(atomic::Ordering::SeqCst)
+}
+
+//==========================================================
 // main()
 //==========================================================
 
@@ -57,17 +72,20 @@ fn main() {
 
 	let Cli { verbosity, command } = args;
 
+	// Save the specified verbosity value.
+	VERBOSITY.store(verbosity, atomic::Ordering::SeqCst);
+
 	match command {
-		Command::Paclet(paclet_command) => handle_paclet_command(paclet_command, verbosity),
+		Command::Paclet(paclet_command) => handle_paclet_command(paclet_command),
 	}
 }
 
-fn handle_paclet_command(command: PacletCommand, verbosity: u8) {
+fn handle_paclet_command(command: PacletCommand) {
 	match command {
 		PacletCommand::New {
 			shorten_to_base_name,
 			name,
-		} => handle_paclet_new(name, shorten_to_base_name, verbosity),
+		} => handle_paclet_new(name, shorten_to_base_name),
 	}
 }
 
@@ -75,7 +93,7 @@ fn handle_paclet_command(command: PacletCommand, verbosity: u8) {
 // $ wolfram paclet ...
 //==========================================================
 
-fn handle_paclet_new(name: String, shorten_to_base_name: bool, verbosity: u8) {
+fn handle_paclet_new(name: String, shorten_to_base_name: bool) {
 	let paclet_parent_dir =
 		std::env::current_dir().expect("unable to get current working directory");
 
