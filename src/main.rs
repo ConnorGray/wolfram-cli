@@ -19,6 +19,11 @@ use wstp::kernel::WolframKernelProcess;
 #[command(name = "wolfram-cli", author, version, about)]
 
 struct Cli {
+	/// Whether to log progress and debugging information
+	///
+	/// Logged information includes:
+	///
+	/// * The Wolfram installation that is being used for evaluation.
 	#[arg(short, long, action = clap::ArgAction::Count)]
 	verbosity: u8,
 
@@ -108,7 +113,7 @@ fn handle_paclet_new(name: String, shorten_to_base_name: bool) {
 	// Find a suitable Wolfram Language installation
 	//----------------------------------------------
 
-	let app = WolframApp::try_default().expect("unable to find any Wolfram Language installations");
+	let app = get_wolfram_app();
 
 	let wolfram_version = app.wolfram_version().unwrap();
 
@@ -214,4 +219,21 @@ impl FromStr for PacletName {
 			)),
 		}
 	}
+}
+
+//==========================================================
+// Helpers
+//==========================================================
+
+fn get_wolfram_app() -> WolframApp {
+	let app = WolframApp::try_default().expect("unable to find any Wolfram Language installations");
+
+	if verbosity() >= 1 {
+		eprintln!(
+			"info: Using Wolfram installation at: {}",
+			app.installation_directory().display()
+		);
+	}
+
+	app
 }
