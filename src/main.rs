@@ -10,6 +10,7 @@ use wstp::kernel::WolframKernelProcess;
 // CLI Argument Declarations
 //==========================================================
 
+/// Unofficial Wolfram command-line interface.
 #[derive(Debug)]
 #[derive(clap::Parser)]
 #[command(name = "wolfram-cli", author, version, about)]
@@ -25,6 +26,7 @@ struct Cli {
 #[derive(Debug)]
 #[derive(clap::Subcommand)]
 enum Command {
+	/// Subcommands for creating, modifying, and querying paclets.
 	#[command(subcommand)]
 	Paclet(PacletCommand),
 }
@@ -32,6 +34,7 @@ enum Command {
 #[derive(Debug)]
 #[derive(clap::Subcommand)]
 enum PacletCommand {
+	/// Create a new paclet in the current directory with the specified name.
 	New {
 		name: String,
 		#[arg(
