@@ -14,7 +14,7 @@ command-line executable.
 <li><a href="#wolfram-cli-paclet-new"><code>wolfram-cli paclet new</code>↴</a></li>
 </ul></div>
 
-# `wolfram-cli`
+## `wolfram-cli`
 
 Unofficial Wolfram command-line interface
 
@@ -42,7 +42,7 @@ Subcommands for creating, modifying, and querying paclets
 
 
 
-### `wolfram-cli paclet new`
+## `wolfram-cli paclet new`
 
 Create a new paclet in the current directory with the specified name
 

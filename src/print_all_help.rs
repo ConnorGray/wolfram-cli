@@ -108,19 +108,25 @@ fn build_command_markdown(
 		command_path
 	};
 
+	//----------------------------------
+	// Write the markdown heading
+	//----------------------------------
+
+	// TODO: `depth` is now unused. Remove if no other use for it appears.
+	/*
 	if depth >= 6 {
 		panic!(
 			"command path nesting depth is deeper than maximum markdown header depth: `{}`",
 			command_path.join(" ")
 		)
 	}
+	*/
 
-
-	// Write the markdown heading
 	writeln!(
 		buffer,
 		"{} `{}`\n",
-		"#".repeat(depth + 1),
+		// "#".repeat(depth + 1),
+		"##",
 		command_path.join(" "),
 	)?;
 
