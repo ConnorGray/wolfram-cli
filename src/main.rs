@@ -1,6 +1,3 @@
-mod print_all_help;
-
-
 use std::{
 	str::FromStr,
 	sync::atomic::{self, AtomicU8},
@@ -43,7 +40,7 @@ enum Command {
 
 	#[clap(hide = true)]
 	PrintAllHelp {
-		#[clap(long)]
+		#[clap(long, required = true)]
 		markdown: bool,
 	},
 }
@@ -92,7 +89,11 @@ fn main() {
 
 	match command {
 		Command::Paclet(paclet_command) => handle_paclet_command(paclet_command),
-		Command::PrintAllHelp { markdown } => print_all_help::print_all_help(markdown),
+		Command::PrintAllHelp { markdown } => {
+			assert!(markdown);
+
+			clap_markdown::print_help_markdown::<Cli>()
+		},
 	}
 }
 
