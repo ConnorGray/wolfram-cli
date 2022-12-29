@@ -1,13 +1,12 @@
-use std::{
-	str::FromStr,
-	sync::atomic::{self, AtomicU8},
-};
+mod config;
+mod kernel;
+
+
+use std::str::FromStr;
 
 use clap::Parser;
 
-use wolfram_app_discovery::WolframApp;
 use wolfram_expr::{Expr, Symbol};
-use wstp::kernel::WolframKernelProcess;
 
 //==========================================================
 // CLI Argument Declarations
@@ -62,18 +61,6 @@ enum PacletCommand {
 }
 
 //==========================================================
-// State
-//==========================================================
-
-static VERBOSITY: AtomicU8 = AtomicU8::new(0);
-
-/// Get the verbosity value specified by the command-line invocation of this
-/// program.
-fn verbosity() -> u8 {
-	VERBOSITY.load(atomic::Ordering::SeqCst)
-}
-
-//==========================================================
 // main()
 //==========================================================
 
@@ -85,7 +72,7 @@ fn main() {
 	let Cli { verbosity, command } = args;
 
 	// Save the specified verbosity value.
-	VERBOSITY.store(verbosity, atomic::Ordering::SeqCst);
+	config::set_verbosity(verbosity);
 
 	match command {
 		Command::Paclet(paclet_command) => handle_paclet_command(paclet_command),
@@ -121,29 +108,11 @@ fn handle_paclet_new(name: String, shorten_to_base_name: bool) {
 	// 	)
 	// }
 
-	//----------------------------------------------
-	// Find a suitable Wolfram Language installation
-	//----------------------------------------------
-
-	let app = get_wolfram_app();
-
-	let wolfram_version = app.wolfram_version().unwrap();
-
-	if wolfram_version.major() < 13
-		|| (wolfram_version.major() == 13 && wolfram_version.minor() < 1)
-	{
-		panic!("incompatible Wolfram version: {wolfram_version}. 13.1 or newer is required for this command.")
-	}
-
 	//------------------------------------------------------
 	// Launch the WolframKernel to evaluate CreatePaclet[..]
 	//------------------------------------------------------
 
-	let mut kernel = {
-		let exe = app.kernel_executable_path().unwrap();
-
-		WolframKernelProcess::launch(&exe).expect("unable to launch WolframKernel")
-	};
+	let mut kernel = kernel::launch_kernel();
 
 	// Evaluate:
 	//
@@ -236,16 +205,3 @@ impl FromStr for PacletName {
 //==========================================================
 // Helpers
 //==========================================================
-
-fn get_wolfram_app() -> WolframApp {
-	let app = WolframApp::try_default().expect("unable to find any Wolfram Language installations");
-
-	if verbosity() >= 1 {
-		eprintln!(
-			"info: Using Wolfram installation at: {}",
-			app.installation_directory().display()
-		);
-	}
-
-	app
-}
