@@ -75,7 +75,9 @@ fn main() {
 	config::set_verbosity(verbosity);
 
 	match command {
-		Command::Paclet(paclet_command) => handle_paclet_command(paclet_command),
+		Command::Paclet(paclet_command) => {
+			handle_paclet_command(paclet_command)
+		},
 		Command::PrintAllHelp { markdown } => {
 			assert!(markdown);
 
@@ -98,8 +100,8 @@ fn handle_paclet_command(command: PacletCommand) {
 //==========================================================
 
 fn handle_paclet_new(name: String, shorten_to_base_name: bool) {
-	let paclet_parent_dir =
-		std::env::current_dir().expect("unable to get current working directory");
+	let paclet_parent_dir = std::env::current_dir()
+		.expect("unable to get current working directory");
 
 	// if verbosity > 0 {
 	// 	eprintln!(

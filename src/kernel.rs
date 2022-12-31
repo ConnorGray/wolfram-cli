@@ -15,7 +15,8 @@ pub fn launch_kernel() -> WolframKernelProcess {
 
 /// Find a suitable Wolfram Language installation
 fn get_wolfram_app() -> WolframApp {
-	let app = WolframApp::try_default().expect("unable to find any Wolfram Language installations");
+	let app = WolframApp::try_default()
+		.expect("unable to find any Wolfram Language installations");
 
 	if config::verbosity() >= 1 {
 		eprintln!(
