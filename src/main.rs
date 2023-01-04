@@ -2,11 +2,11 @@ mod config;
 mod kernel;
 
 
-use std::str::FromStr;
+use std::{io::Write, str::FromStr};
 
 use clap::Parser;
 
-use wolfram_client::EvaluationOutcome;
+use wolfram_client::{EvaluationOutcome, Packet, WolframSession};
 use wolfram_expr::{Expr, Symbol};
 
 //==========================================================
@@ -28,7 +28,7 @@ struct Cli {
 	verbosity: u8,
 
 	#[command(subcommand)]
-	command: Command,
+	command: Option<Command>,
 }
 
 #[derive(Debug)]
@@ -75,6 +75,12 @@ fn main() {
 	// Save the specified verbosity value.
 	config::set_verbosity(verbosity);
 
+	let Some(command) = command else {
+		handle_wolfram();
+
+		return;
+	};
+
 	match command {
 		Command::Paclet(paclet_command) => {
 			handle_paclet_command(paclet_command)
@@ -93,6 +99,91 @@ fn handle_paclet_command(command: PacletCommand) {
 			shorten_to_base_name,
 			name,
 		} => handle_paclet_new(name, shorten_to_base_name),
+	}
+}
+
+//==========================================================
+// $ wolfram
+//==========================================================
+
+fn handle_wolfram() {
+	let mut kernel = kernel::launch_kernel();
+
+	let stdin = std::io::stdin();
+	let mut line = String::new();
+
+	loop {
+		let Some(input_name) = process_until_ready_for_input(&mut kernel) else {
+			break;
+		};
+
+		print!("\n{input_name}");
+		std::io::stdout().flush().unwrap();
+
+		// FIXME: This shouldn't just read a single line, this should read a
+		//        sequence of complete input expressions.
+		line.clear();
+		stdin.read_line(&mut line).expect("IO error reading line");
+
+		println!();
+
+		kernel.enter_text(&line.trim_end_matches('\n'));
+	}
+}
+
+fn process_until_ready_for_input(
+	kernel: &mut WolframSession,
+) -> Option<String> {
+	loop {
+		let Some(packet) = kernel.packets().next() else {
+			return None;
+		};
+
+		match packet {
+			Packet::InputName(input_name) => return Some(input_name),
+			Packet::OutputName(output_name) => {
+				print!("{output_name}");
+				std::io::stdout().flush().unwrap();
+			},
+			Packet::ReturnExpression(expr) => {
+				todo!("display returned expression: {expr}")
+			},
+			Packet::ReturnText(text) => {
+				println!("{text}");
+			},
+			Packet::Expression(expr) => {
+				todo!("display printed expression: {expr}")
+			},
+			Packet::Text(text) => {
+				print!("{text}");
+				std::io::stdout().flush().unwrap();
+			},
+			Packet::Message(_symbol, _name) => {
+				let content_packet = match kernel.packets().next() {
+					Some(packet) => packet,
+					None => todo!(),
+				};
+
+				match content_packet {
+					Packet::Expression(expr) => todo!("display message expression: {expr}"),
+					Packet::Text(text) => {
+						println!("{text}");
+					},
+					_ => panic!("expected message content packet, got: {content_packet:?}"),
+				}
+			},
+			// The Kernel will have already sent a packet containing a syntax
+			// message; this packet only additionally provides a position for
+			// the syntax error. (Which is currently unused.)
+			Packet::Syntax(_) => (),
+			Packet::Return(_) => todo!(),
+			Packet::Evaluate(_) => {
+				panic!("client cannot perform evaluation requested by Kernel: {packet:?}")
+			},
+			Packet::EnterExpression(_) | Packet::EnterText(_) => {
+				panic!("unexpected Kernel packet: {packet:?}")
+			},
+		}
 	}
 }
 
@@ -122,7 +213,7 @@ fn handle_paclet_new(name: String, shorten_to_base_name: bool) {
 	let mut kernel = kernel::launch_kernel();
 
 	match kernel.packets().next() {
-		Some(wolfram_client::Packet::InputName(_)) => (),
+		Some(Packet::InputName(_)) => (),
 		other => panic!("unexpected WolframKernel first packet: {other:?}"),
 	};
 
