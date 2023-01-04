@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 use clap::Parser;
 
+use wolfram_client::EvaluationOutcome;
 use wolfram_expr::{Expr, Symbol};
 
 //==========================================================
@@ -99,6 +100,10 @@ fn handle_paclet_command(command: PacletCommand) {
 // $ wolfram paclet ...
 //==========================================================
 
+//======================================
+// $ wolfram paclet new
+//======================================
+
 fn handle_paclet_new(name: String, shorten_to_base_name: bool) {
 	let paclet_parent_dir = std::env::current_dir()
 		.expect("unable to get current working directory");
@@ -116,23 +121,27 @@ fn handle_paclet_new(name: String, shorten_to_base_name: bool) {
 
 	let mut kernel = kernel::launch_kernel();
 
+	match kernel.packets().next() {
+		Some(wolfram_client::Packet::InputName(_)) => (),
+		other => panic!("unexpected WolframKernel first packet: {other:?}"),
+	};
+
 	// Evaluate:
 	//
 	//     Needs["PacletTools`"]
 	kernel
-		.link()
-		.put_eval_packet(&Expr::normal(
+		.enter_and_wait(Expr::normal(
 			Symbol::new("System`Needs"),
 			vec![Expr::string("PacletTools`")],
 		))
-		.expect(r#"error evaluating Needs["PacletTools`"]"#);
+		.outcome
+		.unwrap_null();
 
 	// Evaluate:
 	//
 	//     CreatePaclet[name, paclet_root]
 	kernel
-		.link()
-		.put_eval_packet(&Expr::normal(
+		.enter_and_wait(Expr::normal(
 			Symbol::new("PacletTools`CreatePaclet"),
 			vec![
 				Expr::string(&name),
@@ -143,19 +152,21 @@ fn handle_paclet_new(name: String, shorten_to_base_name: bool) {
 				),
 			],
 		))
-		.expect(r#"error evaluating CreatePaclet[..]"#);
+		.outcome
+		.unwrap_returned();
 
 	// Evaluate:
 	//
 	//     Exit[]
-	kernel
-		.link()
-		.put_eval_packet(&Expr::normal(Symbol::new("System`Exit"), vec![]))
-		.expect(r#"error evaluating Exit[]"#);
+	//
+	// Wait for the kernel to execute the commands we sent and shutdown
+	// gracefully.
+	let outcome = kernel
+		.enter_and_wait(Expr::normal(Symbol::new("System`Exit"), vec![]))
+		.outcome;
 
-	while let Ok(_) = kernel.link().get_token() {
-		// Wait for the kernel to execute the commands we sent and shutdown
-		// gracefully.
+	if outcome != EvaluationOutcome::KernelQuit {
+		panic!("WolframKernel did not shutdown as expected: {outcome:?}");
 	}
 
 	// TODO(cleanup): Change CreatePaclet to support an option for creating the

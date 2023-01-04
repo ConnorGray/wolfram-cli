@@ -1,16 +1,16 @@
 use wolfram_app_discovery::WolframApp;
-use wstp::kernel::WolframKernelProcess;
+use wolfram_client::WolframSession;
 
 use crate::config;
 
 const WOLFRAM_MINIMUM_VERSION: (u32, u32) = (13, 1);
 
-pub fn launch_kernel() -> WolframKernelProcess {
+pub fn launch_kernel() -> WolframSession {
 	let app = get_wolfram_app();
 
 	let exe = app.kernel_executable_path().unwrap();
 
-	WolframKernelProcess::launch(&exe).expect("unable to launch WolframKernel")
+	WolframSession::launch_kernel(&exe).expect("unable to launch WolframKernel")
 }
 
 /// Find a suitable Wolfram Language installation
