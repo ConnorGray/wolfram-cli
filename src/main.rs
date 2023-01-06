@@ -5,6 +5,7 @@ mod kernel;
 use std::{io::Write, str::FromStr};
 
 use clap::Parser;
+use colored::Colorize;
 
 use wolfram_client::{EvaluationOutcome, Packet, WolframSession};
 use wolfram_expr::{Expr, Symbol};
@@ -117,7 +118,8 @@ fn handle_wolfram() {
 			break;
 		};
 
-		print!("\n{input_name}");
+		let input_name = input_name.trim_end();
+		print!("\n{} ", input_name.bold());
 		std::io::stdout().flush().unwrap();
 
 		// FIXME: This shouldn't just read a single line, this should read a
@@ -155,7 +157,7 @@ fn process_until_ready_for_input(
 				todo!("display printed expression: {expr}")
 			},
 			Packet::Text(text) => {
-				print!("{text}");
+				print!("{}", text.dimmed());
 				std::io::stdout().flush().unwrap();
 			},
 			Packet::Message(_symbol, _name) => {
@@ -167,7 +169,7 @@ fn process_until_ready_for_input(
 				match content_packet {
 					Packet::Expression(expr) => todo!("display message expression: {expr}"),
 					Packet::Text(text) => {
-						println!("{text}");
+						println!("{}", text.red().underline());
 					},
 					_ => panic!("expected message content packet, got: {content_packet:?}"),
 				}
