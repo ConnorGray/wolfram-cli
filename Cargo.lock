@@ -234,9 +234,9 @@ dependencies = [
 
 [[package]]
 name = "glob"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
+checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "heck"
@@ -745,21 +745,9 @@ checksum = "f40009d85759725a34da6d89a94e63d7bdc50a862acf0dbc7c8e488f1edcb6f5"
 
 [[package]]
 name = "wolfram-app-discovery"
-version = "0.3.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1081d796f4f9133d5a85427352d42ebdd54935dade740678fe4321359d9d9c4b"
-dependencies = [
- "core-foundation",
- "once_cell",
- "regex",
- "windows",
-]
-
-[[package]]
-name = "wolfram-app-discovery"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abd73b3989e245577813015fb6fbdc25e325834771879d37a9f1ff3cd74e18dc"
+checksum = "4a8a1aac2cb46705036d312ca3ff35d6aaf19144c32d9218783d67d6e100986c"
 dependencies = [
  "core-foundation",
  "once_cell",
@@ -774,7 +762,7 @@ dependencies = [
  "clap 4.0.32",
  "clap-markdown",
  "colored",
- "wolfram-app-discovery 0.3.0",
+ "wolfram-app-discovery",
  "wolfram-client",
  "wolfram-expr",
  "wstp",
@@ -786,7 +774,7 @@ version = "0.1.0"
 source = "git+https://github.com/ConnorGray/wolfram-client.git#5f31162ace680c2b31b5df9da7aa70bf0c34eb97"
 dependencies = [
  "thiserror",
- "wolfram-app-discovery 0.4.0",
+ "wolfram-app-discovery",
  "wolfram-expr",
  "wstp",
 ]
@@ -804,9 +792,9 @@ dependencies = [
 
 [[package]]
 name = "wstp"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bdc38880bc7e744d1461c0c06bd0b0fbab25d1f7505aca3ad82363b6b3eee2f"
+checksum = "379718fb50477894e868621dbc09f13f009059deb01c579164e56946de1fa613"
 dependencies = [
  "once_cell",
  "ref-cast",
@@ -816,11 +804,11 @@ dependencies = [
 
 [[package]]
 name = "wstp-sys"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a1f73101cd08f75da05548e822d9ccec66a064b8fe8de19afa1090cbe53c129"
+checksum = "f93a96b15ed8f625ba9d74ea3cafd9f9f908983b26ad3e12b0e398b87207f5da"
 dependencies = [
  "bindgen",
  "link-cplusplus",
- "wolfram-app-discovery 0.3.0",
+ "wolfram-app-discovery",
 ]
