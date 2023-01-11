@@ -42,7 +42,9 @@ WithCleanup[
 	Unprotect[{$OutputForms}];
 	,
 
-	AppendTo[$OutputForms, TerminalForm];
+	If[!MemberQ[$OutputForms, TerminalForm],
+		AppendTo[$OutputForms, TerminalForm];
+	];
 
 	Format[TerminalForm[expr_]] := Format[expr, TerminalForm];
 
