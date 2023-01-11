@@ -4,7 +4,7 @@ If[!TrueQ[StringEndsQ[$InputFileName, "install-paclet.wls"]],
 	Exit[-1]
 ]
 
-repoRootDir = FileNameDrop[$InputFileName, - 2]
+repoRootDir = FileNameDrop[$InputFileName, -2]
 
 pacletFile = CreatePacletArchive[FileNameJoin[{
 	repoRootDir,
