@@ -7,12 +7,13 @@ This document contains the help content for the `wolfram-cli` command-line progr
 * [`wolfram-cli`↴](#wolfram-cli)
 * [`wolfram-cli paclet`↴](#wolfram-cli-paclet)
 * [`wolfram-cli paclet new`↴](#wolfram-cli-paclet-new)
+* [`wolfram-cli paclet test`↴](#wolfram-cli-paclet-test)
 
 ## `wolfram-cli`
 
 Unofficial Wolfram command-line interface
 
-**Usage:** `wolfram-cli [OPTIONS] <COMMAND>`
+**Usage:** `wolfram-cli [OPTIONS] [COMMAND]`
 
 ###### **Subcommands:**
 
@@ -33,6 +34,7 @@ Subcommands for creating, modifying, and querying paclets
 ###### **Subcommands:**
 
 * `new` — Create a new paclet in the current directory with the specified name
+* `test` — Run tests defined for a paclet
 
 
 
@@ -49,6 +51,20 @@ Create a new paclet in the current directory with the specified name
 ###### **Options:**
 
 * `-b`, `--base` — use paclet base name as directory name
+
+
+
+## `wolfram-cli paclet test`
+
+Run tests defined for a paclet
+
+This uses `` PacletTools`PacletTest `` to execute any tests defined by the specified paclet.
+
+**Usage:** `wolfram-cli paclet test [PACLET_DIR]`
+
+###### **Arguments:**
+
+* `<PACLET_DIR>` — Optional path to a paclet directory
 
 
 

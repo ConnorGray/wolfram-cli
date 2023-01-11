@@ -10,6 +10,7 @@ Begin["`Private`"]
 
 $supported = {
 	Failure,
+	TestReportObject,
 	TestResultObject
 }
 
@@ -60,7 +61,54 @@ WithCleanup[
 		"Failure" :> ToString[TestResultObject[AnsiStyle["FAILED", Red]], ScriptForm],
 		"Success" :> ToString[TestResultObject[AnsiStyle["OK", Green]], ScriptForm],
 		_ :> ToString[test]
-	}]
+	}];
+
+	Format[
+		report:TestReportObject[KeyValuePattern[{}]],
+		TerminalForm
+	] := Module[{
+		allSucceeded = report["AllTestsSucceeded"],
+		testsFailedCount = report["TestsFailedCount"],
+		testsSucceededCount = report["TestsSucceededCount"]
+	},
+		ToString[
+			TestReportObject[
+				If[TrueQ[allSucceeded],
+					AnsiStyle["OK", Green],
+					AnsiStyle["FAILED", Red]
+				],
+				Row[{
+					AnsiStyle["OK:", Green],
+					" ",
+					testsSucceededCount
+				}],
+				Row[{
+					AnsiStyle["FAILED:", Red],
+					" ",
+					testsFailedCount
+				}]
+			],
+			OutputForm
+		]
+	];
+
+	(*=====================*)
+	(* Generic expressions *)
+	(*=====================*)
+
+	(* FIXME:
+		Figure out how to make this work. Format[expr, TerminalForm] doesn't
+		format List and other expression types that don't explicitly have
+		a Format[..] definition assigned, but its not legal to assign
+		Format definitions to Protected/Locked System symbols (like List).
+
+		This causes the Command*[] functions to need verbose boilerplate code
+		to call Format on the elements of their results need to be printed with
+		pretty formatting.
+	*)
+	(* If no other more specific formatting rules exist, TerminalForm[expr]
+	   should be the same as ScriptForm[expr]. *)
+	(* Format[expr_, TerminalForm] := Format[expr, ScriptForm] *)
 	,
 	Protect @@ {wereProtected};
 	Protect[$OutputForms];
