@@ -46,7 +46,7 @@ WithCleanup[
 
 	Format[TerminalForm[expr_]] := Format[expr, TerminalForm];
 
-	Format[failure:Failure[tag_, meta_], TerminalForm] := ToString @ AnsiStyle[failure, Red];
+	Format[failure:Failure[tag_, meta_], TerminalForm] := ToString[AnsiStyle[failure, Red], ScriptForm];
 
 	Format[
 		test:TestResultObject[KeyValuePattern[{
@@ -55,8 +55,8 @@ WithCleanup[
 		TerminalForm
 	] := Replace[outcome, {
 		(* "Failure" :> ToString[AnsiStyle[test, Red]], *)
-		"Failure" :> ToString[TestResultObject[AnsiStyle["FAILED", Red]]],
-		"Success" :> ToString[TestResultObject[AnsiStyle["OK", Green]]],
+		"Failure" :> ToString[TestResultObject[AnsiStyle["FAILED", Red]], ScriptForm],
+		"Success" :> ToString[TestResultObject[AnsiStyle["OK", Green]], ScriptForm],
 		_ :> ToString[test]
 	}]
 	,
