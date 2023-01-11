@@ -23,10 +23,13 @@ CommandPacletTest[
 
 	Replace[result, {
 		(* Print the results in TerminalForm. *)
-		{reports:{___TestReportObject}} :> (
+		groups:{{___TestReportObject}...} :> (
 			Scan[
-				report |-> Print[Format[report, TerminalForm]],
-				reports
+				reports |-> Scan[
+					report |-> Print[Format[report, TerminalForm]],
+					reports
+				],
+				groups
 			];
 
 			If[AllTrue @ Map[report |-> report["AllTestsSucceeded"], reports],
