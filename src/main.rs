@@ -331,10 +331,7 @@ impl FromStr for PacletName {
 //======================================
 
 fn handle_paclet_test(paclet_dir: Option<PathBuf>) {
-	let paclet_dir: PathBuf = paclet_dir.unwrap_or_else(|| {
-		std::env::current_dir()
-			.expect("unable to get process current working directory")
-	});
+	let paclet_dir = unwrap_path_or_default_to_current_dir(paclet_dir);
 	let paclet_dir: &str = match paclet_dir.to_str() {
 		Some(paclet_dir) => paclet_dir,
 		None => panic!("paclet directory path is not valid UTF-8"),
@@ -421,4 +418,11 @@ fn print_command_output(output: Vec<wolfram_client::Output>) {
 			},
 		}
 	}
+}
+
+fn unwrap_path_or_default_to_current_dir(path: Option<PathBuf>) -> PathBuf {
+	path.unwrap_or_else(|| {
+		std::env::current_dir()
+			.expect("unable to get process current working directory")
+	})
 }
