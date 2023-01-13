@@ -16,7 +16,7 @@ SetOptions[$Output, FormatType -> TerminalForm]
 (* Handle `$ wolfram paclet test` *)
 CommandPacletTest[
 	pacletDir: _?StringQ
-] := Module[{},
+] := Module[{result},
 	Needs["PacletTools`" -> None];
 
 	result = PacletTools`PacletTest[pacletDir, Parallelization -> False];
