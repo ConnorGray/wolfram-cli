@@ -67,6 +67,14 @@ enum PacletCommand {
 	/// This uses [`PacletInstall`] to install the specified paclet archive file.
 	///
 	/// [`PacletInstall`]: https://reference.wolfram.com/language/ref/PacletInstall
+	///
+	/// ### CLI Examples
+	///
+	/// Install a `.paclet` file:
+	///
+	/// ```shell
+	/// $ wolfram-cli paclet install MyPaclet.paclet
+	/// ```
 	Install { paclet_file: PathBuf },
 	/// Run tests defined for a paclet
 	///

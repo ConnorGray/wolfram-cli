@@ -7,6 +7,7 @@ This document contains the help content for the `wolfram-cli` command-line progr
 * [`wolfram-cli`↴](#wolfram-cli)
 * [`wolfram-cli paclet`↴](#wolfram-cli-paclet)
 * [`wolfram-cli paclet new`↴](#wolfram-cli-paclet-new)
+* [`wolfram-cli paclet install`↴](#wolfram-cli-paclet-install)
 * [`wolfram-cli paclet test`↴](#wolfram-cli-paclet-test)
 
 ## `wolfram-cli`
@@ -34,6 +35,7 @@ Subcommands for creating, modifying, and querying paclets
 ###### **Subcommands:**
 
 * `new` — Create a new paclet in the current directory with the specified name
+* `install` — Install the specified `.paclet` file
 * `test` — Run tests defined for a paclet
 
 
@@ -51,6 +53,28 @@ Create a new paclet in the current directory with the specified name
 ###### **Options:**
 
 * `-b`, `--base` — use paclet base name as directory name
+
+
+
+## `wolfram-cli paclet install`
+
+Install the specified `.paclet` file
+
+This uses [`PacletInstall`] to install the specified paclet archive file.
+
+[`PacletInstall`]: https://reference.wolfram.com/language/ref/PacletInstall
+
+### CLI Examples
+
+Install a `.paclet` file:
+
+```shell $ wolfram-cli paclet install MyPaclet.paclet ```
+
+**Usage:** `wolfram-cli paclet install <PACLET_FILE>`
+
+###### **Arguments:**
+
+* `<PACLET_FILE>`
 
 
 
