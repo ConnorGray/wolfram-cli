@@ -62,6 +62,12 @@ enum PacletCommand {
 		)]
 		shorten_to_base_name: bool,
 	},
+	/// Install the specified `.paclet` file
+	///
+	/// This uses [`PacletInstall`] to install the specified paclet archive file.
+	///
+	/// [`PacletInstall`]: https://reference.wolfram.com/language/ref/PacletInstall
+	Install { paclet_file: PathBuf },
 	/// Run tests defined for a paclet
 	///
 	/// This uses `` PacletTools`PacletTest `` to execute any tests defined by
@@ -117,6 +123,9 @@ fn handle_paclet_command(command: PacletCommand) {
 			shorten_to_base_name,
 			name,
 		} => handle_paclet_new(name, shorten_to_base_name),
+		PacletCommand::Install { paclet_file } => {
+			handle_paclet_install(paclet_file)
+		},
 		PacletCommand::Test { paclet_dir } => handle_paclet_test(paclet_dir),
 	}
 }
@@ -324,6 +333,54 @@ impl FromStr for PacletName {
 			)),
 		}
 	}
+}
+
+//======================================
+// $ wolfram paclet install
+//======================================
+
+fn handle_paclet_install(paclet_file: PathBuf) {
+	let paclet_file = match paclet_file.canonicalize() {
+		Ok(file) => file,
+		// TODO: Make this error nicer, as this can commonly occur if the
+		//       specified file path doesn't exist.
+		Err(err) => todo!("error getting absolute paclet file path: {err}"),
+	};
+
+	let paclet_file: &str = match paclet_file.to_str() {
+		Some(paclet_file) => paclet_file,
+		None => panic!(".paclet file path is not valid UTF-8"),
+	};
+
+	let mut kernel = kernel::launch_kernel();
+
+	match kernel.packets().next() {
+		Some(Packet::InputName(_)) => (),
+		other => panic!("unexpected WolframKernel first packet: {other:?}"),
+	};
+
+	load_wolfram_cli_paclet(&mut kernel);
+
+	// Evaluate:
+	//
+	//     CommandPacletInstall[paclet_file]
+	let EvaluationData { output, outcome } =
+		kernel.enter_and_wait(Expr::normal(
+			Symbol::new("ConnorGray`WolframCLI`CommandPacletInstall"),
+			vec![Expr::string(paclet_file)],
+		));
+
+	print_command_output(output);
+
+	match outcome {
+		EvaluationOutcome::Null => (),
+		EvaluationOutcome::Returned(returned) => {
+			todo!("unexpected return value: {returned:?}")
+		},
+		EvaluationOutcome::KernelQuit => {
+			todo!("Kernel unexpectedly quit")
+		},
+	};
 }
 
 //======================================

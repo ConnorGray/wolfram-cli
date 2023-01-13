@@ -1,6 +1,7 @@
 BeginPackage["ConnorGray`WolframCLI`"]
 
 
+CommandPacletInstall::usage = "Handle the command `$ wolfram paclet install`."
 CommandPacletTest::usage = "Handle the command `$ wolfram paclet test`."
 
 Begin["`Private`"]
@@ -48,6 +49,27 @@ CommandPacletTest[
 ]
 
 (*====================================*)
+
+CommandPacletInstall[pacletFile_?StringQ] := Module[{
+	(* TODO: Expose this ForceVersionInstall value via the command-line
+	         interface? *)
+	result = PacletInstall[pacletFile, ForceVersionInstall -> True]
+},
+	Replace[result, {
+		HoldPattern @ PacletObject[_] :> (
+			Print[AnsiStyle["Successfully installed paclet.", Green]];
+		),
+		failure_?FailureQ :> (
+			Print["Error installing paclet: ", Format[failure, TerminalForm]];
+			failure
+		),
+		other_ :> (
+			Print["PacletInstall result had unexpected format: ", InputForm[other]];
+			Return[Failure["UnexpectedValue"], Module]
+		)
+
+	}]
+]
 
 
 End[]
