@@ -1,6 +1,7 @@
 BeginPackage["ConnorGray`WolframCLI`"]
 
 
+CommandPacletBuild::usage = "Handle the command `$ wolfram paclet build`."
 CommandPacletInstall::usage = "Handle the command `$ wolfram paclet install`."
 CommandPacletTest::usage = "Handle the command `$ wolfram paclet test`."
 
@@ -70,6 +71,45 @@ CommandPacletInstall[pacletFile_?StringQ] := Module[{
 
 	}]
 ]
+
+(*====================================*)
+
+CommandPacletBuild[
+	pacletDir: _?StringQ,
+	buildDir: _?StringQ | Automatic
+] := Module[{result},
+
+	(* FIXME: Workaround bug: The WolframKernel will crash when loading the
+		CodeParser dynamic library if that happens after a call to FileHash[..]
+		in PacletBuild (the exact underlying cause is unclear), which manifests
+		as wolfram-cli hanging forever waiting for the dead Kernel. *)
+	Needs["CodeParser`" -> None];
+	CodeParser`CodeConcreteParse["2+2"];
+
+	Needs["PacletTools`" -> None];
+
+	result = PacletTools`PacletBuild[pacletDir, buildDir];
+
+	Replace[result, {
+		Success["PacletBuild", KeyValuePattern[{
+			"PacletArchive" -> pacletArchive_?StringQ,
+			"TotalTime" -> time:Quantity[_, "Seconds"]
+		}]] :> (
+			Print[AnsiStyle["Build succeeded.", Green], " ", "Took ", ToString[time]];
+			Print["Paclet Archive: ", InputForm[pacletArchive]];
+		),
+		failure:Failure[tag_?StringQ] :> (
+			Print[Format[failure, TerminalForm]];
+		),
+		other_ :> (
+			Print["PacletBuild result had unexpected format: ", InputForm[other]];
+			(* TODO: Standardize on Failure's and how they map to exit codes. *)
+			Return[Failure["UnexpectedValue"], Module]
+		)
+	}]
+]
+
+(*====================================*)
 
 
 End[]

@@ -62,6 +62,14 @@ enum PacletCommand {
 		)]
 		shorten_to_base_name: bool,
 	},
+	/// Build the specified paclet
+	///
+	/// This uses [`PacletBuild[..]`](https://reference.wolfram.com/language/PacletTools/ref/PacletBuild)
+	/// to build the specified paclet.
+	Build {
+		paclet_dir: Option<PathBuf>,
+		build_dir: Option<PathBuf>,
+	},
 	/// Install the specified `.paclet` file
 	///
 	/// This uses [`PacletInstall`] to install the specified paclet archive file.
@@ -131,6 +139,10 @@ fn handle_paclet_command(command: PacletCommand) {
 			shorten_to_base_name,
 			name,
 		} => handle_paclet_new(name, shorten_to_base_name),
+		PacletCommand::Build {
+			paclet_dir,
+			build_dir,
+		} => handle_paclet_build(paclet_dir, build_dir),
 		PacletCommand::Install { paclet_file } => {
 			handle_paclet_install(paclet_file)
 		},
@@ -392,6 +404,64 @@ fn handle_paclet_install(paclet_file: PathBuf) {
 }
 
 //======================================
+// $ wolfram paclet build [PACLET_DIR] [BUILD_DIR]
+//======================================
+
+fn handle_paclet_build(
+	paclet_dir: Option<PathBuf>,
+	build_dir: Option<PathBuf>,
+) {
+	let paclet_dir = unwrap_path_or_default_to_current_dir(paclet_dir);
+	let paclet_dir: &str = match paclet_dir.to_str() {
+		Some(paclet_dir) => paclet_dir,
+		None => panic!("paclet directory path is not valid UTF-8"),
+	};
+
+	let mut kernel = kernel::launch_kernel();
+
+	match kernel.packets().next() {
+		Some(Packet::InputName(_)) => (),
+		other => panic!("unexpected WolframKernel first packet: {other:?}"),
+	};
+
+	load_wolfram_cli_paclet(&mut kernel);
+
+	let build_dir: Expr = match build_dir {
+		Some(build_dir) => {
+			let build_dir: &str = match build_dir.to_str() {
+				Some(build_dir) => build_dir,
+				None => {
+					panic!("paclet build directory path is not valid UTF-8")
+				},
+			};
+			Expr::string(build_dir)
+		},
+		None => Expr::symbol(Symbol::new("System`Automatic")),
+	};
+
+	// Evaluate:
+	//
+	//     CommandPacletBuild[paclet_dir, build_dir]
+	let EvaluationData { output, outcome } =
+		kernel.enter_and_wait(Expr::normal(
+			Symbol::new("ConnorGray`WolframCLI`CommandPacletBuild"),
+			vec![Expr::string(paclet_dir), build_dir],
+		));
+
+	print_command_output(output);
+
+	match outcome {
+		EvaluationOutcome::Null => (),
+		EvaluationOutcome::Returned(returned) => {
+			todo!("unexpected return value: {returned:?}")
+		},
+		EvaluationOutcome::KernelQuit => {
+			todo!("Kernel unexpectedly quit")
+		},
+	};
+}
+
+//======================================
 // $ wolfram paclet test [PACLET_DIR]
 //======================================
 
@@ -441,6 +511,8 @@ fn load_wolfram_cli_paclet(kernel: &mut WolframSession) {
 	// Evaluate:
 	//
 	//     Needs["ConnorGray`WolframCLI`"]
+	//
+	// TODO: Print any output generating during this loading.
 	let outcome = kernel
 		.enter_and_wait(r#"Needs["ConnorGray`WolframCLI`"]"#)
 		.outcome;
@@ -459,6 +531,8 @@ fn load_wolfram_cli_paclet(kernel: &mut WolframSession) {
 	//
 	// Command output shouldn't use the default line wrapping used in
 	// interactive mode.
+	//
+	// TODO: Print any output generating during this loading.
 	let _outcome = kernel
 		.enter_and_wait(r#"SetOptions[$Output, PageWidth -> Infinity]"#)
 		.outcome;
