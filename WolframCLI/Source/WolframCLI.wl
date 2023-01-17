@@ -51,7 +51,13 @@ CommandPacletTest[
 
 (*====================================*)
 
-CommandPacletInstall[pacletFile_?StringQ] := Module[{
+CommandPacletInstall[pacletFile_?StringQ] :=
+	doPacletInstall[pacletFile]
+
+(*------------------------------------*)
+
+(* Used by `$ wolfram paclet install` and `$ wolfram paclet build --install` *)
+doPacletInstall[pacletFile_?StringQ] := Module[{
 	(* TODO: Expose this ForceVersionInstall value via the command-line
 	         interface? *)
 	result = PacletInstall[pacletFile, ForceVersionInstall -> True]
@@ -68,7 +74,6 @@ CommandPacletInstall[pacletFile_?StringQ] := Module[{
 			Print["PacletInstall result had unexpected format: ", InputForm[other]];
 			Return[Failure["UnexpectedValue"], Module]
 		)
-
 	}]
 ]
 
@@ -76,7 +81,8 @@ CommandPacletInstall[pacletFile_?StringQ] := Module[{
 
 CommandPacletBuild[
 	pacletDir: _?StringQ,
-	buildDir: _?StringQ | Automatic
+	buildDir: _?StringQ | Automatic,
+	install: _?BooleanQ
 ] := Module[{result},
 
 	(* FIXME: Workaround bug: The WolframKernel will crash when loading the
@@ -97,6 +103,10 @@ CommandPacletBuild[
 		}]] :> (
 			Print[AnsiStyle["Build succeeded.", Green], " ", "Took ", ToString[time]];
 			Print["Paclet Archive: ", InputForm[pacletArchive]];
+
+			If[install,
+				doPacletInstall[pacletArchive]
+			]
 		),
 		failure:Failure[tag_?StringQ] :> (
 			Print[Format[failure, TerminalForm]];

@@ -69,6 +69,9 @@ enum PacletCommand {
 	Build {
 		paclet_dir: Option<PathBuf>,
 		build_dir: Option<PathBuf>,
+		/// Install the built paclet.
+		#[arg(short, long)]
+		install: bool,
 	},
 	/// Install the specified `.paclet` file
 	///
@@ -142,7 +145,8 @@ fn handle_paclet_command(command: PacletCommand) {
 		PacletCommand::Build {
 			paclet_dir,
 			build_dir,
-		} => handle_paclet_build(paclet_dir, build_dir),
+			install,
+		} => handle_paclet_build(paclet_dir, build_dir, install),
 		PacletCommand::Install { paclet_file } => {
 			handle_paclet_install(paclet_file)
 		},
@@ -410,6 +414,7 @@ fn handle_paclet_install(paclet_file: PathBuf) {
 fn handle_paclet_build(
 	paclet_dir: Option<PathBuf>,
 	build_dir: Option<PathBuf>,
+	install: bool,
 ) {
 	let paclet_dir = unwrap_path_or_default_to_current_dir(paclet_dir);
 	let paclet_dir: &str = match paclet_dir.to_str() {
@@ -445,7 +450,7 @@ fn handle_paclet_build(
 	let EvaluationData { output, outcome } =
 		kernel.enter_and_wait(Expr::normal(
 			Symbol::new("ConnorGray`WolframCLI`CommandPacletBuild"),
-			vec![Expr::string(paclet_dir), build_dir],
+			vec![Expr::string(paclet_dir), build_dir, Expr::from(install)],
 		));
 
 	print_command_output(output);
