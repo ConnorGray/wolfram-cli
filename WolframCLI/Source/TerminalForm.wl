@@ -22,18 +22,27 @@ Needs["GeneralUtilities`" -> None]
 Needs["MUnit`"]
 
 
-AnsiStyle[expr_, style_] := Module[{
+AnsiStyle[expr_, styles0__] := Module[{
+	styles = {styles0},
+	codes,
 	ansiStyle,
 	ansiReset = "\:001b[0m"
 },
-	ansiStyle = Replace[style, {
-		Red | "Red" -> "\:001b[31m",
-		Green | "Green" -> "\:001b[32m",
-		other_ :> Throw[StringForm["Unknown ANSI color name: ``", other]]
-	}];
+	codes = Map[ToString @* styleEscapeCode, styles];
 
-	Row[{ansiStyle, expr, ansiReset}]
+	ansiStyle = "\:001b[" <> StringRiffle[codes, ";"] <> "m";
+
+	ToString[Row[{ansiStyle, expr, ansiReset}], OutputForm]
 ]
+
+styleEscapeCode[style_] := Replace[style, {
+	Red | "Red" -> 31,
+	Green | "Green" -> 32,
+	Bold | "Bold" -> 1,
+	Italic | "Italic" -> 3,
+	Underlined | "Underlined" -> 4,
+	other_ :> Throw[StringForm["Style cannot be represented as ANSI escape code: ``", other]]
+}]
 
 LoadTerminalForm[] := Module[{
 	wereProtected
