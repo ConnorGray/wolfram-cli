@@ -41,6 +41,8 @@ styleEscapeCode[style_] := Replace[style, {
 	Bold | "Bold" -> 1,
 	Italic | "Italic" -> 3,
 	Underlined | "Underlined" -> 4,
+	"SlowBlink" | "Blink" -> 5,
+	"FastBlink" -> 6,
 	other_ :> Throw[StringForm["Style cannot be represented as ANSI escape code: ``", other]]
 }]
 
