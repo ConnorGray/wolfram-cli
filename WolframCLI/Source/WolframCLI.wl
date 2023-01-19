@@ -28,7 +28,26 @@ CommandPacletTest[
 		groups:{{___TestReportObject}...} :> (
 			Scan[
 				reports |-> Scan[
-					report |-> Print[Format[report, TerminalForm]],
+					report |-> Module[{results},
+						results = Values @ report["TestResults"];
+
+						Assert[MatchQ[results, {___TestResultObject}]];
+
+						Scan[
+							Replace[{
+								result:TestResultObject[_] :> (
+									printTestResult[result];
+								),
+								other_ :> Throw[StringForm[
+									"Unexpected \"TestResults\" element: ``",
+									InputForm @ other
+								]]
+							}],
+							results
+						];
+
+						(* Print[Format[report, TerminalForm]], *)
+					],
 					reports
 				],
 				groups
@@ -48,6 +67,64 @@ CommandPacletTest[
 
 	(* Print[Format[result, TerminalForm]]; *)
 ]
+
+(*------------------------------------*)
+
+printTestResult[test_TestResultObject] := Module[{},
+	Replace[test["Outcome"], {
+		"Success" :> Print[Format[test, TerminalForm]],
+		"Failure" :> Module[{a, b},
+			Print[
+				Format[test, TerminalForm],
+				" -- ",
+				AnsiStyle["expected", Red, Italic],
+				" | ",
+				AnsiStyle["actual", Green, Italic]
+			];
+
+			(* Strip the HoldForm wrapper -- this shouldn't be necessary in almost all cases. *)
+			a = Replace[test["ExpectedOutput"], HoldForm[x_] :> x];
+			b = Replace[test["ActualOutput"], HoldForm[x_] :> x];
+
+			printTextualExprDiff[a, b]
+		],
+		(* FIXME: Expand this to cover all outcomes *)
+		other_ :> (
+			Print["Unhandled test failure outcome: ", InputForm[other]];
+			$Failed
+		)
+	}]
+]
+
+printTextualExprDiff[
+	expr1_,
+	expr2_
+] := (
+	Needs["CodeFormatter`" -> None];
+
+	Module[{
+		text1 = CodeFormatter`CodeFormat[ToString[expr1, InputForm], CodeFormatter`Airiness -> 0.8],
+		text2 = CodeFormatter`CodeFormat[ToString[expr2, InputForm], CodeFormatter`Airiness -> 0.8],
+		alignment
+	},
+		alignment = SequenceAlignment[
+			StringSplit[text1, "\n"],
+			StringSplit[text2, "\n"]
+		];
+
+		Scan[
+			Replace[{
+				{common_?StringQ} :> Print["> ", common],
+				{expected:{___?StringQ}, got:{___?StringQ}} :> (
+					Print[AnsiStyle["> ", Red], AnsiStyle[StringRiffle[expected, "\n"], Red]];
+					Print[AnsiStyle["> ", Green], AnsiStyle[StringRiffle[got, "\n"], Green]];
+				),
+				other_ :> Throw[StringForm["Unexpected SequenceAlignment result: ``", InputForm @ other]]
+			}],
+			alignment
+		]
+	]
+)
 
 (*====================================*)
 
