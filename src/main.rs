@@ -550,7 +550,10 @@ fn print_command_output(output: Vec<wolfram_client::Output>) {
 		match output {
 			wolfram_client::Output::Print(packet_expr) => match packet_expr {
 				PacketExpr::Expr(expr) => todo!("display printed expr: {expr}"),
-				PacketExpr::Text(text) => println!("{text}"),
+				PacketExpr::Text(text) => {
+					print!("{text}");
+					std::io::stdout().flush().unwrap();
+				},
 			},
 			wolfram_client::Output::Message(wolfram_client::Message {
 				symbol: _,
@@ -558,7 +561,10 @@ fn print_command_output(output: Vec<wolfram_client::Output>) {
 				content,
 			}) => match content {
 				PacketExpr::Expr(expr) => todo!("display message expr: {expr}"),
-				PacketExpr::Text(text) => println!("{text}"),
+				PacketExpr::Text(text) => {
+					print!("{text}");
+					std::io::stdout().flush().unwrap();
+				},
 			},
 		}
 	}
