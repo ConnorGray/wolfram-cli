@@ -114,7 +114,7 @@ printTextualExprDiff[
 
 		Scan[
 			Replace[{
-				{common_?StringQ} :> Print["> ", common],
+				common:{__?StringQ} :> Print["> ", StringRiffle[common, "\n"]],
 				{expected:{___?StringQ}, got:{___?StringQ}} :> (
 					Print[AnsiStyle["> ", Red], AnsiStyle[StringRiffle[expected, "\n"], Red]];
 					Print[AnsiStyle["> ", Green], AnsiStyle[StringRiffle[got, "\n"], Green]];
