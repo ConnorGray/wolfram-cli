@@ -8,6 +8,7 @@ This document contains the help content for the `wolfram-cli` command-line progr
 * [`wolfram-cli paclet`↴](#wolfram-cli-paclet)
 * [`wolfram-cli paclet new`↴](#wolfram-cli-paclet-new)
 * [`wolfram-cli paclet build`↴](#wolfram-cli-paclet-build)
+* [`wolfram-cli paclet doc`↴](#wolfram-cli-paclet-doc)
 * [`wolfram-cli paclet install`↴](#wolfram-cli-paclet-install)
 * [`wolfram-cli paclet test`↴](#wolfram-cli-paclet-test)
 
@@ -37,6 +38,7 @@ Subcommands for creating, modifying, and querying paclets
 
 * `new` — Create a new paclet in the current directory with the specified name
 * `build` — Build the specified paclet
+* `doc` — Build paclet documentation
 * `install` — Install the specified `.paclet` file
 * `test` — Run tests defined for a paclet
 
@@ -74,6 +76,24 @@ This uses [`PacletBuild[..]`](https://reference.wolfram.com/language/PacletTools
 ###### **Options:**
 
 * `-i`, `--install` — Install the built paclet
+
+
+
+## `wolfram-cli paclet doc`
+
+Build paclet documentation
+
+**Usage:** `wolfram-cli paclet doc [OPTIONS] [PACLET_DIR] [BUILD_DIR]`
+
+###### **Arguments:**
+
+* `<PACLET_DIR>`
+* `<BUILD_DIR>`
+
+###### **Options:**
+
+* `--html` — Build paclet documentation into HTML
+* `--open` — Automatically open the built HTML documentation
 
 
 

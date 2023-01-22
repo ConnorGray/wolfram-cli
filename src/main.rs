@@ -71,6 +71,17 @@ enum PacletCommand {
 		#[arg(short, long)]
 		install: bool,
 	},
+	/// Build paclet documentation
+	Doc {
+		paclet_dir: Option<PathBuf>,
+		build_dir: Option<PathBuf>,
+		/// Build paclet documentation into HTML
+		#[arg(long, requires = "build_dir")]
+		html: bool,
+		/// Automatically open the built HTML documentation
+		#[arg(long, requires = "html")]
+		open: bool,
+	},
 	/// Install the specified `.paclet` file
 	///
 	/// This uses [`PacletInstall`] to install the specified paclet archive file.
@@ -145,6 +156,12 @@ fn handle_paclet_command(command: PacletCommand) {
 			build_dir,
 			install,
 		} => handle_paclet_build(paclet_dir, build_dir, install),
+		PacletCommand::Doc {
+			paclet_dir,
+			build_dir,
+			html,
+			open,
+		} => handle_paclet_doc(paclet_dir, build_dir, html, open),
 		PacletCommand::Install { paclet_file } => {
 			handle_paclet_install(paclet_file)
 		},
@@ -454,6 +471,71 @@ fn handle_paclet_build(
 		Expr::normal(
 			Symbol::new("ConnorGray`WolframCLI`CommandPacletBuild"),
 			vec![Expr::string(paclet_dir), build_dir, Expr::from(install)],
+		),
+		&mut print_command_output,
+	);
+
+	match outcome {
+		EvaluationOutcome::Null => (),
+		EvaluationOutcome::Returned(returned) => {
+			todo!("unexpected return value: {returned:?}")
+		},
+		EvaluationOutcome::KernelQuit => {
+			todo!("Kernel unexpectedly quit")
+		},
+	};
+}
+
+//======================================
+// $ wolfram paclet doc [PACLET_DIR] [--html] [--open]
+//======================================
+
+fn handle_paclet_doc(
+	paclet_dir: Option<PathBuf>,
+	build_dir: Option<PathBuf>,
+	html: bool,
+	open: bool,
+) {
+	let paclet_dir = unwrap_path_or_default_to_current_dir(paclet_dir);
+	let paclet_dir: &str = match paclet_dir.to_str() {
+		Some(paclet_dir) => paclet_dir,
+		None => panic!("paclet directory path is not valid UTF-8"),
+	};
+
+	let build_dir: Expr = match build_dir {
+		Some(build_dir) => {
+			let build_dir: &str = match build_dir.to_str() {
+				Some(build_dir) => build_dir,
+				None => {
+					panic!("paclet build directory path is not valid UTF-8")
+				},
+			};
+			Expr::string(build_dir)
+		},
+		None => Expr::symbol(Symbol::new("System`Automatic")),
+	};
+
+	let mut kernel = kernel::launch_kernel();
+
+	match kernel.packets().next() {
+		Some(Packet::InputName(_)) => (),
+		other => panic!("unexpected WolframKernel first packet: {other:?}"),
+	};
+
+	load_wolfram_cli_paclet(&mut kernel);
+
+	// Evaluate:
+	//
+	//     CommandPacletDoc[paclet_dir, build_dir, html, open]
+	let outcome = kernel.enter_and_wait_with_output_handler(
+		Expr::normal(
+			Symbol::new("ConnorGray`WolframCLI`CommandPacletDoc"),
+			vec![
+				Expr::string(paclet_dir),
+				build_dir,
+				Expr::from(html),
+				Expr::from(open),
+			],
 		),
 		&mut print_command_output,
 	);

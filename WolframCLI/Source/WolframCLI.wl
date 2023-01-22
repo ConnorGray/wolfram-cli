@@ -2,6 +2,7 @@ BeginPackage["ConnorGray`WolframCLI`"]
 
 
 CommandPacletBuild::usage = "Handle the command `$ wolfram paclet build`."
+CommandPacletDoc::usage = "Handle the command `$ wolfram paclet doc`."
 CommandPacletInstall::usage = "Handle the command `$ wolfram paclet install`."
 CommandPacletTest::usage = "Handle the command `$ wolfram paclet test`."
 
@@ -252,6 +253,56 @@ CommandPacletBuild[
 			Return[Failure["UnexpectedValue"], Module]
 		)
 	}]
+]
+
+(*====================================*)
+
+CommandPacletDoc[
+	pacletDir: _?StringQ,
+	buildDir: _?StringQ | Automatic,
+	html: _?BooleanQ,
+	open: _?BooleanQ
+] := Module[{
+	result
+},
+	Needs["PacletTools`" -> None];
+
+	result = PacletTools`PacletDocumentationBuild[
+		pacletDir,
+		buildDir,
+		Replace[html, {
+			True -> "HTML",
+			False -> "Notebooks"
+		}]
+	];
+
+	Replace[result, {
+		Success["DocumentationBuild", assoc:KeyValuePattern[{
+			"TotalTime" -> Quantity[totalTime_, "Seconds"],
+			"PercentSucceeded" -> Quantity[percentSucceeded_, "Percent"],
+			"ProcessedFilesCount" -> processedFilesCount_
+		}]] :> (
+			Print[
+				AnsiStyle["Paclet documentation build successful.", Green],
+				" ",
+				"Processed " <> ToString[processedFilesCount] <> " files in " <> ToString[totalTime] <> " seconds."
+			];
+
+			If[open && html,
+				Replace[Lookup[assoc, "HTMLFiles", {}], {
+					{File[htmlFile_?StringQ], ___} :> (
+						UsingFrontEnd @ SystemOpen[File[htmlFile]]
+					),
+					other_ :> (
+						Print[Format[Failure["UnexpectedValue", other], TerminalForm]];
+					)
+				}]
+			];
+		),
+		other_ :> (
+			Print[Format[Failure["UnexpectedValue", other], TerminalForm]];
+		)
+	}];
 ]
 
 (*====================================*)
