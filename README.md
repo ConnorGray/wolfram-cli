@@ -41,6 +41,16 @@ $ wolfram-cli
 
 Which should open an interactive REPL interface.
 
+
+## Features
+
+**Run paclet tests from the command-line:**
+
+![`wolfram-paclet-test` output](./docs/media/wolfram-paclet-test-output.gif)
+
+*See also: [`$ wolfram-cli paclet test`](./docs/CommandLineHelp.md#wolfram-cli-paclet-test)*
+
+
 ## Contributing
 
 See [**Development.md**](./docs/Development.md) for instructions on how to perform

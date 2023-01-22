@@ -19,6 +19,7 @@ SetOptions[$Output, FormatType -> TerminalForm]
 CommandPacletTest[
 	pacletDir: _?StringQ
 ] := Module[{result},
+(*
 	Needs["PacletTools`" -> None];
 
 	result = PacletTools`PacletTest[pacletDir, Parallelization -> False];
@@ -64,9 +65,66 @@ CommandPacletTest[
 			Return[Failure["UnexpectedValue"], Module]
 		)
 	}];
+*)
 
 	(* Print[Format[result, TerminalForm]]; *)
+
+	(* TODO: Base the implementation of this function on PacletTest; currently,
+		this implementation is completely ad-hoc. This will depend on adding
+		support to PacletTest for passing through EventHandlers for reacting to
+		testing events as they happen. *)
+
+	Needs["PacletTools`" -> None];
+	Needs["MUnit`" -> None];
+
+	Module[{
+		testsDirs,
+		testFiles,
+		logger
+	},
+		testsDirs = PacletTools`PacletExtensionDirectory[pacletDir, {"Test", "Tests"}];
+
+		Assert[MatchQ[testsDirs, <| ({"Test" | "Tests", _} -> _?DirectoryQ) ...|>]];
+
+		testsDirs = Values[testsDirs];
+
+		testFiles = Flatten @ Map[
+			testsDir |-> FileNames["*.mt" | "*.wlt", testsDir],
+			testsDirs
+		];
+
+		Assert[MatchQ[testFiles, {___?StringQ}]];
+
+		logger = Function[testResult,
+			printTestResult[testResult];
+		];
+
+		logger = <|
+			"LogSuccess" -> logger,
+			"LogFailure" -> logger,
+			"LogMessagesFailure" -> logger,
+			"LogError" -> logger
+		|>;
+
+		Assert[AssociationQ[logger]];
+
+		Scan[
+			file |-> (
+				Print[AnsiStyle["FILE:", Bold, Underlined], " ", file];
+				MUnit`TestRun[file, "Loggers" -> {logger}];
+			),
+			testFiles
+		];
+	]
 ]
+
+(*------------------------------------*)
+
+(*
+	Function with argument structure used by the
+	"Log(Success|Failure|MessagesFailure|Error)" events.
+*)
+testOutcomeLogger[test_TestResultObject] := printTestResult[test]
 
 (*------------------------------------*)
 
