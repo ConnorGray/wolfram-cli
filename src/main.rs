@@ -646,8 +646,7 @@ fn print_command_output(output: wolfram_client::Output) {
 		}) => match content {
 			PacketExpr::Expr(expr) => todo!("display message expr: {expr}"),
 			PacketExpr::Text(text) => {
-				print!("{text}");
-				std::io::stdout().flush().unwrap();
+				println!("{text}");
 			},
 		},
 	}
