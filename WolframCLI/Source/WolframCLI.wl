@@ -9,6 +9,7 @@ CommandPacletTest::usage = "Handle the command `$ wolfram paclet test`."
 
 Begin["`Private`"]
 
+Needs["ConnorGray`WolframCLI`"]
 Needs["ConnorGray`WolframCLI`TerminalForm`"]
 
 (* FIXME: Remove this automatic initialization. *)
@@ -99,6 +100,8 @@ CommandPacletTest[
 				loaded by WolframCLI`.
 	*)
 	linkObj = LinkLaunch[First[$CommandLine] <> " -wstp"];
+
+	MathLink`LinkSetPrintFullSymbols[linkObj, True];
 
 	LinkRead[linkObj]; (* Read the InputNamePacket. *)
 
@@ -192,6 +195,7 @@ CommandPacletTest[
 				   parent client to be printed to the end user. *)
 				LinkWrite[$ParentLink, packet];
 			),
+			MessagePacket[__] :> {},
 			ReturnPacket[expr_] :> (
 				(* TODO: Do something with `expr`, like print testing summary
 					results? *)
