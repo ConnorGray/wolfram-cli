@@ -19,7 +19,10 @@ SetOptions[$Output, FormatType -> TerminalForm]
 (* Handle `$ wolfram paclet test` *)
 CommandPacletTest[
 	pacletDir: _?StringQ
-] := Module[{result},
+] := Module[{
+	result,
+	linkObj
+},
 (*
 	Needs["PacletTools`" -> None];
 
@@ -75,14 +78,60 @@ CommandPacletTest[
 		support to PacletTest for passing through EventHandlers for reacting to
 		testing events as they happen. *)
 
-	Needs["PacletTools`" -> None];
-	Needs["MUnit`" -> None];
+	(*-------------------------------------------------*)
+	(* Launch a fresh subkernel for running the tests. *)
+	(*-------------------------------------------------*)
 
-	Module[{
+	(* By launching a fresh subkernel, we prevent earlier loads of the paclet
+	   or other existing Kernel state from contaminating the test run.
+
+	   NOTE:
+			This is particularly necessary for making
+	        `$ wolfram-cli paclet test` of PacletTools work (or any other paclet
+			whose code is loaded by the WolframCLI` implementation).
+
+			In that sense, this code is perhaps a workaround needed only for a
+			small number of paclets that WolframCLI` depends on, and it is
+			unnecessary for all other paclets.
+
+			TODO: Only launch this subkernel if the specified paclet is one
+				loaded by WolframCLI`.
+	*)
+	linkObj = LinkLaunch[First[$CommandLine] <> " -wstp"];
+
+	LinkRead[linkObj]; (* Read the InputNamePacket. *)
+
+	(*--------------------------------------------------------------------*)
+	(* Send an expression to drive the test run to the testing subkernel. *)
+	(*--------------------------------------------------------------------*)
+
+	LinkWrite[linkObj, Unevaluated @ EvaluatePacket @ Module[{
 		testsDirs,
 		testFiles,
 		logger
 	},
+		(* Prevent the testing subkernel from adding "\" and ">" characters from
+		   wrapping long lines. *)
+		SetOptions[$Output, PageWidth -> Infinity];
+
+		(*
+			Do PacletDirectoryLoad[pacletDir] first to ensure that the
+			specified paclet directory is the paclet actually loaded during
+			the test run.
+
+			TODO:
+				This can still work incorrectly if the installed version
+				of a paclet has a higher version number than the paclet
+				in `pacletDir`. Check for that scenario and issue an error
+				or at least a warning. (Suggest they do PacletDisable, or
+				instead temporarily do that ourselves?)
+		*)
+		PacletDirectoryLoad[pacletDir];
+
+		Needs["PacletTools`" -> None];
+		Needs["MUnit`" -> None];
+		Needs["ConnorGray`WolframCLI`" -> None];
+
 		testsDirs = PacletTools`PacletExtensionDirectory[pacletDir, {"Test", "Tests"}];
 
 		Assert[MatchQ[testsDirs, <| ({"Test" | "Tests", _} -> _?DirectoryQ) ...|>]];
@@ -116,7 +165,45 @@ CommandPacletTest[
 			),
 			testFiles
 		];
-	]
+	]];
+
+	(*-------------------------------------------------*)
+	(* Process packets sent from the testing subkernel *)
+	(*-------------------------------------------------*)
+
+	(* Re-print output sent from the testing subkernel, and close the link once
+	   the testing evaluation returns. *)
+	While[True,
+		Replace[LinkRead[linkObj], {
+			packet:TextPacket[output_?StringQ] :> (
+				If[!MatchQ[$ParentLink, _LinkObject],
+					(* FIXME: Handle this error better. This may occur if/when
+						wolfram-cli functionality is moved into WolframKernel,
+						where there isn't a parent link. *)
+					Throw[Row[{
+						"Error forwarding packet from `paclet test` subkernel: $ParentLink is not _LinkObject: ",
+						InputForm[$ParentLink]
+					}]]
+				];
+
+				(* Write[$Output, output]; *)
+				(* Forward print output `packet` from the subkernel to the
+				   parent client to be printed to the end user. *)
+				LinkWrite[$ParentLink, packet];
+			),
+			ReturnPacket[expr_] :> (
+				(* TODO: Do something with `expr`, like print testing summary
+					results? *)
+				LinkClose[linkObj];
+				Break[]
+			),
+			other_ :> (
+				Print["Unexpected packet sent from Kernel during test run: ", InputForm[other]];
+				LinkClose[linkObj];
+				Break[]
+			)
+		}];
+	];
 ]
 
 (*------------------------------------*)
