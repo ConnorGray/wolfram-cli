@@ -4,9 +4,9 @@ TerminalForm::usage = "TerminalForm[expr] prints as a character-terminal represe
 
 LoadTerminalForm::usage = "LoadTerminalForm[] adds TerminalForm to $OutputForms and loads TerminalForm definitions."
 
-AnsiStyle::usage = "AnsiStyle[expr, style] styles expr using the style ANSI color directive."
-
 Begin["`Private`"]
+
+Needs["ConnorGray`WolframCLI`"]
 
 $supported = {
 	Failure,
@@ -22,7 +22,7 @@ Needs["GeneralUtilities`" -> None]
 Needs["MUnit`"]
 
 
-AnsiStyle[expr_, styles0__] := Module[{
+TerminalStyle[expr_, styles0__] := Module[{
 	styles = {styles0},
 	codes,
 	ansiStyle,
@@ -60,7 +60,7 @@ WithCleanup[
 
 	Format[TerminalForm[expr_]] := Format[expr, TerminalForm];
 
-	Format[failure:Failure[tag_, meta_], TerminalForm] := ToString[AnsiStyle[failure, Red], ScriptForm];
+	Format[failure:Failure[tag_, meta_], TerminalForm] := ToString[TerminalStyle[failure, Red], ScriptForm];
 
 	Format[
 		test:TestResultObject[KeyValuePattern[{
@@ -68,9 +68,9 @@ WithCleanup[
 		}]],
 		TerminalForm
 	] := Replace[outcome, {
-		(* "Failure" :> ToString[AnsiStyle[test, Red]], *)
-		"Failure" :> ToString[TestResultObject[AnsiStyle["FAILED", Red]], ScriptForm],
-		"Success" :> ToString[TestResultObject[AnsiStyle["OK", Green]], ScriptForm],
+		(* "Failure" :> ToString[TerminalStyle[test, Red]], *)
+		"Failure" :> ToString[TestResultObject[TerminalStyle["FAILED", Red]], ScriptForm],
+		"Success" :> ToString[TestResultObject[TerminalStyle["OK", Green]], ScriptForm],
 		_ :> ToString[test]
 	}];
 
@@ -85,16 +85,16 @@ WithCleanup[
 		ToString[
 			TestReportObject[
 				If[TrueQ[allSucceeded],
-					AnsiStyle["OK", Green],
-					AnsiStyle["FAILED", Red]
+					TerminalStyle["OK", Green],
+					TerminalStyle["FAILED", Red]
 				],
 				Row[{
-					AnsiStyle["OK:", Green],
+					TerminalStyle["OK:", Green],
 					" ",
 					testsSucceededCount
 				}],
 				Row[{
-					AnsiStyle["FAILED:", Red],
+					TerminalStyle["FAILED:", Red],
 					" ",
 					testsFailedCount
 				}]
