@@ -1,6 +1,16 @@
 BeginPackage["ConnorGray`WolframCLI`"]
 
+(*-------------------------------------------------*)
+(* Utilities for writing command handler functions *)
+(*-------------------------------------------------*)
+
 TerminalStyle::usage = "TerminalStyle[expr, style] styles expr using the style ANSI color directive."
+
+TerminalForm::usage = "TerminalForm[expr] prints as a character-terminal representation of expr."
+
+(*------------------------------------*)
+(* Built-in command handler functions *)
+(*------------------------------------*)
 
 CommandPacletBuild::usage = "Handle the command `$ wolfram paclet build`."
 CommandPacletDoc::usage = "Handle the command `$ wolfram paclet doc`."

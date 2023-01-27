@@ -1,7 +1,5 @@
 BeginPackage["ConnorGray`WolframCLI`TerminalForm`"]
 
-TerminalForm::usage = "TerminalForm[expr] prints as a character-terminal representation of expr."
-
 LoadTerminalForm::usage = "LoadTerminalForm[] adds TerminalForm to $OutputForms and loads TerminalForm definitions."
 
 Begin["`Private`"]
