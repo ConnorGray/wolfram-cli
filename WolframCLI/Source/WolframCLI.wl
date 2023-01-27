@@ -17,9 +17,12 @@ CommandPacletDoc::usage = "Handle the command `$ wolfram paclet doc`."
 CommandPacletInstall::usage = "Handle the command `$ wolfram paclet install`."
 CommandPacletTest::usage = "Handle the command `$ wolfram paclet test`."
 
+CommandHandleCustom::usage = "Handle custom subcommands defined by \"WolframCLI\" paclet extensions."
+
 Begin["`Private`"]
 
 Needs["ConnorGray`WolframCLI`"]
+Needs["ConnorGray`WolframCLI`ErrorUtils`"]
 Needs["ConnorGray`WolframCLI`TerminalForm`"]
 
 (* FIXME: Remove this automatic initialization. *)
@@ -405,6 +408,114 @@ CommandPacletDoc[
 			Print[Format[Failure["UnexpectedValue", other], TerminalForm]];
 		)
 	}];
+]
+
+(*====================================*)
+
+CommandHandleCustom[
+	(* All command-line arguments. *)
+	cliArgs: {___?StringQ}
+] := CatchRaised @ Module[{
+	subcommand,
+	paclets,
+	paclet,
+	ext,
+	handlerSymbol
+},
+	Needs["PacletTools`" -> None];
+
+	If[Length[cliArgs] < 2,
+		(* TODO: Better error. *)
+		Throw[$Failed]
+	];
+
+	subcommand = cliArgs[[2]];
+
+	(*----------------------------------------------------------------------------*)
+	(* Find the paclet and "WolframCLI" extension metadata to handle `subcommand` *)
+	(*----------------------------------------------------------------------------*)
+
+	paclets = PacletFind[All, <| "Extension" -> "WolframCLI" |>];
+
+	(* Select paclets that provide a CLI handler for `subcommand`. *)
+	paclets = Select[
+		paclets,
+		paclet |-> Module[{exts},
+			exts = PacletTools`PacletExtensions[paclet, "WolframCLI"];
+			MemberQ[
+				exts,
+				{"WolframCLI", KeyValuePattern["Subcommand" -> subcommand]}
+			]
+		]
+	];
+
+	paclet = Replace[paclets, {
+		{} :> (
+			(* No paclets provide a handler for this subcommand, so indicate to
+				the wolfram-cli client that it should show a clap error. *)
+			Return["NoCustomHandler", Module]
+		),
+		{only_} :> only,
+		{first_, __} :> (
+			Print["ambiguity warning: multiple paclets provide a handler for subcommand: ", paclets];
+			first
+		),
+		other_ :> RaiseError["Unexpected paclet list form: ``", InputForm[paclets]]
+	}];
+
+	ext = Replace[PacletTools`PacletExtensions[paclet, "WolframCLI"], {
+		{} :> RaiseError["Unreachable: paclet has no WolframCLI extensions"],
+		{ext_} :> ext,
+		exts:{__} :> (
+			Print["ambiguity warning: multiple WolframCLI extensions provide a handler for subcommand: ", InputForm[exts]];
+			first
+		),
+		other_ :> RaiseError["Unexpected PacletExtensions result: ``", InputForm[other]]
+	}];
+
+	(*--------------------------------------------------------------------------*)
+	(* Extract the "HandlerFunction" option value of the "WolframCLI" extension *)
+	(*--------------------------------------------------------------------------*)
+
+	handlerSymbol = Replace[ext, {
+		{
+			"WolframCLI",
+			KeyValuePattern[{
+				"Subcommand" -> subcommand,
+				"HandlerFunction" -> handlerSymbol0_?StringQ
+			}]
+		} :> Module[{ctx},
+			ctx = StringRiffle[
+				Most @ StringSplit[handlerSymbol0, "`"],
+				{"", "`", "`"}
+			];
+
+			RaiseConfirm @ Needs[ctx];
+
+			Symbol[handlerSymbol0]
+		],
+		{"WolframCLI", metadata_?AssociationQ} :> RaiseError[
+			"\"WolframCLI\" extension did not have the expected fields, or they had invalid values: ``",
+			InputForm[ext]
+		],
+		other_ :> RaiseError["Unexpected extension form: ``", InputForm[other]]
+	}];
+
+	(*--------------------------------------------*)
+	(* Call the handler function for `subcommand` *)
+	(*--------------------------------------------*)
+
+	Replace[handlerSymbol[cliArgs], {
+		Null -> Null,
+		failure_Failure :> (
+			Print[Format[failure, TerminalForm]]
+		),
+		other_ :> RaiseError[
+			"Custom Wolfram CLI handler for subcommand `` returned unexpected result: ``",
+			InputForm[subcommand],
+			InputForm[other]
+		]
+	}]
 ]
 
 (*====================================*)

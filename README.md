@@ -50,6 +50,31 @@ Which should open an interactive REPL interface.
 
 *See also: [`$ wolfram-cli paclet test`](./docs/CommandLineHelp.md#wolfram-cli-paclet-test)*
 
+**Add custom subcommands via "WolframCLI" paclet extensions:**
+
+Given an installed paclet that declares the following extension:
+
+```wolfram
+PacletObject[<|
+    ...,
+    "Extensions" -> {
+        ...,
+        {"WolframCLI",
+            "Subcommand" -> "travel-directions",
+            "HandlerFunction" -> "MyPackage`HandleTravelDirectionsSubcommand"
+        }
+    }
+|>]
+```
+
+then `$ wolfram-cli travel-directions` will be handled by the
+`HandleTravelDirectionsSubcommand[..]` function:
+
+![`wolfram-cli travel-directions` output](./docs/media/wolfram-travel-directions-output.gif)
+
+See [examples/TravelDirectionsCLI](./examples/TravelDirectionsCLI/) for the
+complete example.
+
 
 ## Contributing
 

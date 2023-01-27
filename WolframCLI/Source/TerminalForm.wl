@@ -36,6 +36,7 @@ TerminalStyle[expr_, styles0__] := Module[{
 styleEscapeCode[style_] := Replace[style, {
 	Red | "Red" -> 31,
 	Green | "Green" -> 32,
+	Blue | "Blue" -> 34,
 	Bold | "Bold" -> 1,
 	Italic | "Italic" -> 3,
 	Underlined | "Underlined" -> 4,

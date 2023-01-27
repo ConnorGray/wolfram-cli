@@ -118,7 +118,35 @@ enum PacletCommand {
 //==========================================================
 
 fn main() {
-	let args = Cli::parse();
+	let args = match Cli::try_parse() {
+		Ok(args) => args,
+		Err(error) => {
+			// FIXME:
+			//   Only defer to custom subcommand handlers if it was a top-level
+			//   subcommand that doesn't exist in `Cli`.
+			//
+			//   E.g. `$ wolfram-cli paclet does-not-exist` should NOT be
+			//   handled by a {"WolframCLI", "Subcommand" -> "paclet", ...}
+			//   extension.
+			//
+			//   The current implementation effectively allows "WolframCLI"
+			//   extensions to extend built-in subcommands, which isn't
+			//   intentional; allowing that officially should be a deliberate
+			//   design decision.
+			return handle_custom_command(error);
+
+			// NOTE: This code isn't quite right, because the InvalidSubcommand
+			//       error is also generated for invalid sub-sub-commands (like
+			//       $ wolfram-cli paclet does-not-exist).
+			//
+			// println!("ERROR: {:#?}", error);
+			// if error.kind() == clap::error::ErrorKind::InvalidSubcommand {
+			// 	return handle_custom_command(error);
+			// } else {
+			// 	error.exit();
+			// }
+		},
+	};
 
 	// dbg!(&args);
 
@@ -586,6 +614,61 @@ fn handle_paclet_test(paclet_dir: Option<PathBuf>) {
 		EvaluationOutcome::Null => (),
 		EvaluationOutcome::Returned(returned) => {
 			todo!("unexpected return value: {returned:?}")
+		},
+		EvaluationOutcome::KernelQuit => {
+			todo!("Kernel unexpectedly quit")
+		},
+	};
+}
+
+//==========================================================
+// Handle custom commands
+//==========================================================
+
+fn handle_custom_command(error: clap::Error) {
+	// TODO: This will panic if any arguments are not valid Unicode; handle that
+	//       more gracefully.
+	let args = std::env::args();
+
+	let mut kernel = kernel::launch_kernel();
+
+	match kernel.packets().next() {
+		Some(Packet::InputName(_)) => (),
+		other => panic!("unexpected WolframKernel first packet: {other:?}"),
+	};
+
+	load_wolfram_cli_paclet(&mut kernel);
+
+	let args: Vec<Expr> = args
+		.into_iter()
+		.map(|arg: String| Expr::string(arg))
+		.collect();
+
+	// Evaluate:
+	//
+	//     CommandHandleCustom[args]
+	let outcome = kernel.enter_and_wait_with_output_handler(
+		Expr::normal(
+			Symbol::new("ConnorGray`WolframCLI`CommandHandleCustom"),
+			vec![Expr::list(args)],
+		),
+		&mut print_command_output,
+	);
+
+	match outcome {
+		EvaluationOutcome::Null => (),
+		EvaluationOutcome::Returned(returned) => match returned {
+			PacketExpr::Text(e) if e == "\"NoCustomHandler\"" => {
+				error.exit();
+			},
+			PacketExpr::Expr(e) if e == Expr::string("NoCustomHandler") => {
+				error.exit();
+			},
+			_ => {
+				eprintln!("unexpected expression returned from CommandHandleCustom: {returned:#?}");
+
+				error.exit();
+			},
 		},
 		EvaluationOutcome::KernelQuit => {
 			todo!("Kernel unexpectedly quit")
