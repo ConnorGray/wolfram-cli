@@ -44,13 +44,13 @@ Which should open an interactive REPL interface.
 
 ## Features
 
-**Run paclet tests from the command-line:**
+#### Run paclet tests from the command-line
 
 ![`wolfram-paclet-test` output](./docs/media/wolfram-paclet-test-output.gif)
 
 *See also: [`$ wolfram-cli paclet test`](./docs/CommandLineHelp.md#wolfram-cli-paclet-test)*
 
-**Add custom subcommands via "WolframCLI" paclet extensions:**
+#### Add custom subcommands via "WolframCLI" paclet extensions
 
 Given an installed paclet that declares the following extension:
 
