@@ -346,7 +346,7 @@ CommandPacletBuild[
 				doPacletInstall[pacletArchive]
 			]
 		),
-		failure:Failure[tag_?StringQ] :> (
+		failure:Failure[tag_?StringQ, _] :> (
 			Print[Format[failure, TerminalForm]];
 		),
 		other_ :> (
