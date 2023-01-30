@@ -241,9 +241,9 @@ printTestResult[test_TestResultObject] := Module[{},
 			Print[
 				Format[test, TerminalForm],
 				" -- ",
-				TerminalStyle["expected", Red, Italic],
+				TerminalStyle["expected", "Red", Italic],
 				" | ",
-				TerminalStyle["actual", Green, Italic]
+				TerminalStyle["actual", "Green", Italic]
 			];
 
 			(* Strip the HoldForm wrapper -- this shouldn't be necessary in almost all cases. *)
@@ -280,8 +280,8 @@ printTextualExprDiff[
 			Replace[{
 				common:{__?StringQ} :> Print["> ", StringRiffle[common, "\n"]],
 				{expected:{___?StringQ}, got:{___?StringQ}} :> (
-					Print[TerminalStyle["> ", Red], TerminalStyle[StringRiffle[expected, "\n"], Red]];
-					Print[TerminalStyle["> ", Green], TerminalStyle[StringRiffle[got, "\n"], Green]];
+					Print[TerminalStyle["> ", "Red"], TerminalStyle[StringRiffle[expected, "\n"], "Red"]];
+					Print[TerminalStyle["> ", "Green"], TerminalStyle[StringRiffle[got, "\n"], "Green"]];
 				),
 				other_ :> Throw[StringForm["Unexpected SequenceAlignment result: ``", InputForm @ other]]
 			}],
@@ -305,7 +305,7 @@ doPacletInstall[pacletFile_?StringQ] := Module[{
 },
 	Replace[result, {
 		HoldPattern @ PacletObject[_] :> (
-			Print[TerminalStyle["Successfully installed paclet.", Green]];
+			Print[TerminalStyle["Successfully installed paclet.", "Green"]];
 		),
 		failure_?FailureQ :> (
 			Print["Error installing paclet: ", Format[failure, TerminalForm]];
@@ -342,7 +342,7 @@ CommandPacletBuild[
 			"PacletArchive" -> pacletArchive_?StringQ,
 			"TotalTime" -> time:Quantity[_, "Seconds"]
 		}]] :> (
-			Print[TerminalStyle["Build succeeded.", Green], " ", "Took ", ToString[time]];
+			Print[TerminalStyle["Build succeeded.", "Green"], " ", "Took ", ToString[time]];
 			Print["Paclet Archive: ", InputForm[pacletArchive]];
 
 			If[install,
@@ -388,7 +388,7 @@ CommandPacletDoc[
 			"ProcessedFilesCount" -> processedFilesCount_
 		}]] :> (
 			Print[
-				TerminalStyle["Paclet documentation build successful.", Green],
+				TerminalStyle["Paclet documentation build successful.", "Green"],
 				" ",
 				"Processed " <> ToString[processedFilesCount] <> " files in " <> ToString[totalTime] <> " seconds."
 			];

@@ -5,6 +5,7 @@ LoadTerminalForm::usage = "LoadTerminalForm[] adds TerminalForm to $OutputForms 
 Begin["`Private`"]
 
 Needs["ConnorGray`WolframCLI`"]
+Needs["ConnorGray`WolframCLI`ErrorUtils`"]
 
 $supported = {
 	Failure,
@@ -34,15 +35,56 @@ TerminalStyle[expr_, styles0__] := Module[{
 ]
 
 styleEscapeCode[style_] := Replace[style, {
-	Red | "Red" -> 31,
-	Green | "Green" -> 32,
-	Blue | "Blue" -> 34,
+	(* Named Colors, foreground *)
+	"Black" -> 30,
+	"Red" -> 31,
+	"Green" -> 32,
+	"Yellow" -> 33,
+	"Blue" -> 34,
+	"Magenta" -> 35,
+	"Cyan" -> 36,
+	"White" -> 37,
+
+	"BrightBlack" | "Gray" -> 90,
+	"BrightRed" -> 91,
+	"BrightGreen" -> 92,
+	"BrightYellow" -> 93,
+	"BrightBlue" -> 94,
+	"BrightMagenta" -> 95,
+	"BrightCyan" -> 96,
+	"BrightWhite" -> 97,
+
+	(* Named Colors, background *)
+	(Background -> "Black") -> 40,
+	(Background -> "Red") -> 41,
+	(Background -> "Green") -> 42,
+	(Background -> "Yellow") -> 43,
+	(Background -> "Blue") -> 44,
+	(Background -> "Magenta") -> 45,
+	(Background -> "Cyan") -> 46,
+	(Background -> "White") -> 47,
+
+	(Background -> ("BrightBlack" | "Gray")) -> 40,
+	(Background -> "BrightRed") -> 41,
+	(Background -> "BrightGreen") -> 42,
+	(Background -> "BrightYellow") -> 43,
+	(Background -> "BrightBlue") -> 44,
+	(Background -> "BrightMagenta") -> 45,
+	(Background -> "BrightCyan") -> 46,
+	(Background -> "BrightWhite") -> 47,
+
+	(* TODO: Strings should be ANSI standard; RGBColor's should use true color. *)
+
 	Bold | "Bold" -> 1,
 	Italic | "Italic" -> 3,
 	Underlined | "Underlined" -> 4,
 	"SlowBlink" | "Blink" -> 5,
 	"FastBlink" -> 6,
-	other_ :> Throw[StringForm["Style cannot be represented as ANSI escape code: ``", other]]
+
+	other_ :> RaiseError[
+		"Style directive cannot be represented as ANSI escape code: ``",
+		InputForm[other]
+	]
 }]
 
 LoadTerminalForm[] := Module[{
@@ -59,7 +101,7 @@ WithCleanup[
 
 	Format[TerminalForm[expr_]] := Format[expr, TerminalForm];
 
-	Format[failure:Failure[tag_, meta_], TerminalForm] := ToString[TerminalStyle[failure, Red], ScriptForm];
+	Format[failure:Failure[tag_, meta_], TerminalForm] := ToString[TerminalStyle[failure, "Red"], ScriptForm];
 
 	Format[
 		test:TestResultObject[KeyValuePattern[{
@@ -68,8 +110,8 @@ WithCleanup[
 		TerminalForm
 	] := Replace[outcome, {
 		(* "Failure" :> ToString[TerminalStyle[test, Red]], *)
-		"Failure" :> ToString[TestResultObject[TerminalStyle["FAILED", Red]], ScriptForm],
-		"Success" :> ToString[TestResultObject[TerminalStyle["OK", Green]], ScriptForm],
+		"Failure" :> ToString[TestResultObject[TerminalStyle["FAILED", "Red"]], ScriptForm],
+		"Success" :> ToString[TestResultObject[TerminalStyle["OK", "Green"]], ScriptForm],
 		_ :> ToString[test]
 	}];
 
@@ -84,16 +126,16 @@ WithCleanup[
 		ToString[
 			TestReportObject[
 				If[TrueQ[allSucceeded],
-					TerminalStyle["OK", Green],
-					TerminalStyle["FAILED", Red]
+					TerminalStyle["OK", "Green"],
+					TerminalStyle["FAILED", "Red"]
 				],
 				Row[{
-					TerminalStyle["OK:", Green],
+					TerminalStyle["OK:", "Green"],
 					" ",
 					testsSucceededCount
 				}],
 				Row[{
-					TerminalStyle["FAILED:", Red],
+					TerminalStyle["FAILED:", "Red"],
 					" ",
 					testsFailedCount
 				}]
