@@ -125,6 +125,7 @@ CommandPacletTest[
 	LinkWrite[linkObj, Unevaluated @ EvaluatePacket @ Module[{
 		testsDirs,
 		testFiles,
+		summaryData,
 		logger
 	},
 		(* Prevent the testing subkernel from adding "\" and ">" characters from
@@ -162,7 +163,15 @@ CommandPacletTest[
 
 		Assert[MatchQ[testFiles, {___?StringQ}]];
 
+		summaryData = <|
+			"Success" -> 0,
+			"Failure" -> 0,
+			"MessagesFailure" -> 0,
+			"Error" -> 0
+		|>;
+
 		logger = Function[testResult,
+			summaryData[testResult["Outcome"]] += 1;
 			printTestResult[testResult];
 		];
 
@@ -175,6 +184,10 @@ CommandPacletTest[
 
 		Assert[AssociationQ[logger]];
 
+		(*---------------------------------------------*)
+		(* Run each testing file, logging test results *)
+		(*---------------------------------------------*)
+
 		Scan[
 			file |-> (
 				Print[TerminalStyle["FILE:", Bold, Underlined], " ", file];
@@ -182,6 +195,47 @@ CommandPacletTest[
 			),
 			testFiles
 		];
+
+		(*---------------------------------*)
+		(* Print a summary of the test run *)
+		(*---------------------------------*)
+
+		printSummaryDatapoint[field_?StringQ, desc_?StringQ] := Module[{
+			count = summaryData[field],
+			style = None
+		},
+			If[count > 0,
+				style = Replace[field, {
+					"Success" -> "Green",
+					"Failure" -> "Red",
+					"MessagesFailure" -> "Yellow",
+					"Error" -> "Red",
+					_ -> None
+				}];
+			];
+
+			Print[
+				"\t",
+				If[style =!= None,
+					TerminalStyle[count, style]
+					,
+					count
+				],
+				" ",
+				Pluralize[{"test", "tests"}, count],
+				" ",
+				desc
+			];
+		];
+
+		Print[];
+		Print[TerminalStyle["Summary:", Bold, Underlined]];
+		Print[];
+
+		printSummaryDatapoint["Success", "succeeded"];
+		printSummaryDatapoint["Failure", "failed"];
+		printSummaryDatapoint["MessagesFailure", "had unexpected message output"];
+		printSummaryDatapoint["Error", "produced unexpected errors"];
 	]];
 
 	(*-------------------------------------------------*)
