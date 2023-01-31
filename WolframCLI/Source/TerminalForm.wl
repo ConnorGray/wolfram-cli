@@ -25,13 +25,20 @@ TerminalStyle[expr_, styles0__] := Module[{
 	styles = {styles0},
 	codes,
 	ansiStyle,
-	ansiReset = "\:001b[0m"
+	ansiReset = "\:001b[0m",
+	exprLines = StringSplit[ToString[expr, OutputForm], "\n"]
 },
 	codes = Map[ToString @* styleEscapeCode, styles];
 
 	ansiStyle = "\:001b[" <> StringRiffle[codes, ";"] <> "m";
 
-	ToString[Row[{ansiStyle, expr, ansiReset}], OutputForm]
+	StringRiffle[
+		Map[
+			line |-> ansiStyle <> line <> ansiReset,
+			exprLines
+		],
+		"\n"
+	]
 ]
 
 styleEscapeCode[style_] := Replace[style, {
