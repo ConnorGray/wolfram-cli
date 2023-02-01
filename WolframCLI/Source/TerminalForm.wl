@@ -20,6 +20,7 @@ Needs["GeneralUtilities`" -> None]
 
 Needs["MUnit`"]
 
+TerminalStyle[expr_] := ToString[expr, OutputForm]
 
 TerminalStyle[expr_, styles0__] := Module[{
 	styles = {styles0},

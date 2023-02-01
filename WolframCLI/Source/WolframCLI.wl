@@ -19,6 +19,8 @@ CommandPacletTest::usage = "Handle the command `$ wolfram paclet test`."
 
 CommandHandleCustom::usage = "Handle custom subcommands defined by \"WolframCLI\" paclet extensions."
 
+CommandPrintTerminalFormDebug::usage = "Handle the command `$ wolfram dump-terminal-form-debug`."
+
 Begin["`Private`"]
 
 Needs["ConnorGray`WolframCLI`"]
@@ -570,6 +572,68 @@ CommandHandleCustom[
 			InputForm[other]
 		]
 	}]
+]
+
+(*====================================*)
+
+CommandPrintTerminalFormDebug[] := Module[{
+	$namedColors = {
+		"Black",
+		"Red",
+		"Green",
+		"Yellow",
+		"Blue",
+		"Magenta",
+		"Cyan",
+		"White",
+
+		"BrightBlack", "Gray",
+		"BrightRed",
+		"BrightGreen",
+		"BrightYellow",
+		"BrightBlue",
+		"BrightMagenta",
+		"BrightCyan",
+		"BrightWhite"
+	}
+},
+	Do[
+		Print[TerminalStyle["This is " <> color <> " styled text", color]]
+		,
+		{color, $namedColors}
+	];
+
+	Do[
+		Print[TerminalStyle["This is Bold, " <> color <> " styled text", Bold, color]]
+		,
+		{color, $namedColors}
+	];
+
+	Print[VerificationTest[1, 1]];
+	Print[VerificationTest[1, 2]];
+
+	Print[TestReport[{VerificationTest[1, 1], VerificationTest[1, 2]}]];
+
+	Print["Error with one level: ", TerminalForm @ Failure["Level1", <|
+		"MessageTemplate" -> "Level 1 error"
+	|>]];
+
+	Print["Error with two levels: ", TerminalForm @ Failure["Level1", <|
+		"MessageTemplate" -> "Level 1 error",
+		"CausedBy" -> Failure["Level2", <|
+			"MessageTemplate" -> "Level 2 error"
+		|>]
+	|>]];
+
+	Print["Error with three levels: ", TerminalForm @ Failure["Level1", <|
+		"MessageTemplate" -> "Level 1 error",
+		"CausedBy" -> Failure["Level2", <|
+			"MessageTemplate" -> "Level 2 error",
+			"CausedBy" -> Failure["Level3", <|
+				"MessageTemplate" -> "Level 3 error"
+			|>]
+		|>]
+	|>]];
 ]
 
 (*====================================*)

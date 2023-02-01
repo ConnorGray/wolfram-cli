@@ -44,6 +44,11 @@ enum Command {
 		#[clap(long, required = true)]
 		markdown: bool,
 	},
+
+	/// Command that prints an example of every type of object that has special
+	/// formatting.
+	#[clap(hide = true)]
+	PrintTerminalFormDebug,
 }
 
 #[derive(Debug)]
@@ -169,6 +174,9 @@ fn main() {
 			assert!(markdown);
 
 			clap_markdown::print_help_markdown::<Cli>()
+		},
+		Command::PrintTerminalFormDebug => {
+			handle_print_terminal_form_debug_command()
 		},
 	}
 }
@@ -674,6 +682,34 @@ fn handle_custom_command(error: clap::Error) {
 			todo!("Kernel unexpectedly quit")
 		},
 	};
+}
+
+//==========================================================
+// $ wolfram dump-terminal-form-debug
+//==========================================================
+
+fn handle_print_terminal_form_debug_command() {
+	let mut kernel = kernel::launch_kernel();
+
+	match kernel.packets().next() {
+		Some(Packet::InputName(_)) => (),
+		other => panic!("unexpected WolframKernel first packet: {other:?}"),
+	};
+
+	load_wolfram_cli_paclet(&mut kernel);
+
+	// Evaluate:
+	//
+	//     CommandPrintTerminalFormDebug[]
+	let outcome = kernel.enter_and_wait_with_output_handler(
+		Expr::normal(
+			Symbol::new("ConnorGray`WolframCLI`CommandPrintTerminalFormDebug"),
+			vec![],
+		),
+		&mut print_command_output,
+	);
+
+	outcome.unwrap_null();
 }
 
 //==========================================================
