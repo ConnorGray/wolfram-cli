@@ -108,7 +108,30 @@ WithCleanup[
 
 	Format[TerminalForm[expr_]] := Format[expr, TerminalForm];
 
+	(*---------*)
+	(* Failure *)
+	(*---------*)
+
+	(* Format Failure's that contain a "CausedBy" field to print both the
+	   outer error and the inner 'cause' error.
+
+	   Note that this is recursive, so a chain of "CausedBy" errors will be
+	   formatted with each cause on a separate line. *)
+	Format[
+		Failure[tag_, assoc:KeyValuePattern[{"CausedBy" -> cause_Failure}]],
+		TerminalForm
+	] := StringJoin[
+		(* Drop "CausedBy" to prevent infinite recursion. *)
+		ToString @ Format[Failure[tag, KeyDrop[assoc, "CausedBy"]], TerminalForm],
+		"\n  | Caused by: ",
+		ToString @ Format[cause, TerminalForm]
+	];
+
 	Format[failure:Failure[tag_, meta_], TerminalForm] := ToString[TerminalStyle[failure, "Red"], ScriptForm];
+
+	(*------------------*)
+	(* TestResultObject *)
+	(*------------------*)
 
 	Format[
 		test:TestResultObject[KeyValuePattern[{
