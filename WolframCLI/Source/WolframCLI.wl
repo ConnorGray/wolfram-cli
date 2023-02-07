@@ -269,7 +269,7 @@ CommandPacletTest[
 	   the testing evaluation returns. *)
 	While[True,
 		Replace[LinkRead[linkObj], {
-			packet:TextPacket[output_?StringQ] :> (
+			packet:(TextPacket[output_?StringQ] | MessagePacket[__]) :> (
 				If[!MatchQ[$ParentLink, _LinkObject],
 					(* FIXME: Handle this error better. This may occur if/when
 						wolfram-cli functionality is moved into WolframKernel,
@@ -285,7 +285,6 @@ CommandPacletTest[
 				   parent client to be printed to the end user. *)
 				LinkWrite[$ParentLink, packet];
 			),
-			MessagePacket[__] :> {},
 			ReturnPacket[expr_] :> (
 				(* TODO: Do something with `expr`, like print testing summary
 					results? *)
