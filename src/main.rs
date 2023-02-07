@@ -115,6 +115,9 @@ enum PacletCommand {
 		/// This no paclet directory is specified, the current directory is
 		/// the default.
 		paclet_dir: Option<PathBuf>,
+
+		/// Optional file or directory containing tests to be run.
+		tests_path: Option<PathBuf>,
 	},
 }
 
@@ -201,7 +204,10 @@ fn handle_paclet_command(command: PacletCommand) {
 		PacletCommand::Install { paclet_file } => {
 			handle_paclet_install(paclet_file)
 		},
-		PacletCommand::Test { paclet_dir } => handle_paclet_test(paclet_dir),
+		PacletCommand::Test {
+			paclet_dir,
+			tests_path,
+		} => handle_paclet_test(paclet_dir, tests_path),
 	}
 }
 
@@ -591,7 +597,10 @@ fn handle_paclet_doc(
 // $ wolfram paclet test [PACLET_DIR]
 //======================================
 
-fn handle_paclet_test(paclet_dir: Option<PathBuf>) {
+fn handle_paclet_test(
+	paclet_dir: Option<PathBuf>,
+	tests_path: Option<PathBuf>,
+) {
 	let paclet_dir = unwrap_path_or_default_to_current_dir(paclet_dir);
 	let paclet_dir: &str = match paclet_dir.to_str() {
 		Some(paclet_dir) => paclet_dir,
@@ -607,13 +616,22 @@ fn handle_paclet_test(paclet_dir: Option<PathBuf>) {
 
 	load_wolfram_cli_paclet(&mut kernel);
 
+	let mut args = vec![Expr::string(paclet_dir)];
+
+	if let Some(tests_path) = tests_path {
+		let tests_path = tests_path
+			.to_str()
+			.expect("paclet tests path is not valid UTF-8");
+		args.push(Expr::string(tests_path));
+	}
+
 	// Evaluate:
 	//
 	//     CommandPacletTest[paclet_dir]
 	let outcome = kernel.enter_and_wait_with_output_handler(
 		Expr::normal(
 			Symbol::new("ConnorGray`WolframCLI`CommandPacletTest"),
-			vec![Expr::string(paclet_dir)],
+			args,
 		),
 		&mut print_command_output,
 	);

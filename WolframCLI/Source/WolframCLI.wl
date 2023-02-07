@@ -35,7 +35,8 @@ SetOptions[$Output, FormatType -> TerminalForm]
 
 (* Handle `$ wolfram paclet test` *)
 CommandPacletTest[
-	pacletDir: _?StringQ
+	pacletDir: _?StringQ,
+	testsPath: _?StringQ | Automatic : Automatic
 ] := Module[{
 	result,
 	linkObj
@@ -152,18 +153,38 @@ CommandPacletTest[
 		Needs["MUnit`" -> None];
 		Needs["ConnorGray`WolframCLI`" -> None];
 
-		testsDirs = PacletTools`PacletExtensionDirectory[pacletDir, {"Test", "Tests"}];
+		testFiles = Replace[testsPath, {
+			Automatic | _?DirectoryQ :> (
+				testsDirs = Replace[testsPath, {
+					Automatic :> (
+						testsDirs = PacletTools`PacletExtensionDirectory[pacletDir, {"Test", "Tests"}];
+						Assert[MatchQ[testsDirs, <| ({"Test" | "Tests", _} -> _?DirectoryQ) ...|>]];
+						Values[testsDirs]
+					),
+					dir_?DirectoryQ :> {dir},
+					other_ :> RaiseError["unreachable testsPath value: ``", other]
+				}];
 
-		Assert[MatchQ[testsDirs, <| ({"Test" | "Tests", _} -> _?DirectoryQ) ...|>]];
+				RaiseAssert[
+					MatchQ[testsDirs, {___?StringQ}],
+					"unexpected testsDirs value: ``", InputForm[testsDirs]
+				];
 
-		testsDirs = Values[testsDirs];
+				Flatten @ Map[
+					testsDir |-> FileNames["*.mt" | "*.wlt", testsDir],
+					testsDirs
+				]
+			),
+			_ /; FileType[testsPath] === File :> {testsPath},
+			other_ :> (
+				RaiseError[
+					"invalid testsPath value: must be a file, directory, or Automatic: ``",
+					InputForm[testsPath]
+				]
+			)
+		}];
 
-		testFiles = Flatten @ Map[
-			testsDir |-> FileNames["*.mt" | "*.wlt", testsDir],
-			testsDirs
-		];
-
-		Assert[MatchQ[testFiles, {___?StringQ}]];
+		RaiseAssert[MatchQ[testFiles, {___?StringQ}]];
 
 		summaryData = <|
 			"Success" -> 0,
