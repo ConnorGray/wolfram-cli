@@ -143,6 +143,7 @@ WithCleanup[
 		(* "Failure" :> ToString[TerminalStyle[test, Red]], *)
 		"Failure" :> ToString[TestResultObject[TerminalStyle["FAILED", "Red"]], ScriptForm],
 		"Success" :> ToString[TestResultObject[TerminalStyle["OK", "Green"]], ScriptForm],
+		"Error"   :> ToString[TestResultObject[TerminalStyle["ERROR", "Red", Underlined]], ScriptForm],
 		_ :> ToString[test]
 	}];
 

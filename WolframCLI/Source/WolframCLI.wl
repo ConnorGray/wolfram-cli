@@ -313,7 +313,13 @@ testOutcomeLogger[test_TestResultObject] := printTestResult[test]
 printTestResult[test_TestResultObject] := Module[{},
 	Replace[test["Outcome"], {
 		"Success" :> Print[Format[test, TerminalForm]],
-		"Failure" :> Module[{a, b},
+		"Failure" :> Module[{
+			formattedInput,
+			a,
+			b
+		},
+			formattedInput = formattedTestField[test, "Input"];
+
 			Print[
 				Format[test, TerminalForm],
 				" -- ",
@@ -322,11 +328,40 @@ printTestResult[test_TestResultObject] := Module[{},
 				TerminalStyle["actual", "Green", Italic]
 			];
 
+			Print[
+				"| ", TerminalStyle["Input:", Underlined], " ", TerminalStyle[formattedInput, "Blue"]
+			];
+
 			(* Strip the HoldForm wrapper -- this shouldn't be necessary in almost all cases. *)
 			a = Replace[test["ExpectedOutput"], HoldForm[x_] :> x];
 			b = Replace[test["ActualOutput"], HoldForm[x_] :> x];
 
 			printTextualExprDiff[a, b]
+		],
+		"Error" :> Module[{},
+			Print[Format[test, TerminalForm]];
+			Replace[test[All], {
+				KeyValuePattern[{
+					"Input" -> HoldForm[input0_],
+					"ActualOutput" -> Hold[Throw[payload_, ___]]
+				}] :> Module[{
+					payloadString = ToString[Unevaluated @ payload, InputForm],
+					formattedInput
+				},
+					formattedInput = formattedTestField[test, "Input"];
+
+					Print[
+						"| ", TerminalStyle["Input:", Underlined], " ", TerminalStyle[formattedInput, "Blue"]
+					];
+					Print[
+						TerminalStyle["Unexpected Exception: ", "Red"],
+						payloadString
+					]
+				],
+				other_ :> (
+					Print["Unhandled 'Error' test object format: ", InputForm[other]]
+				)
+			}];
 		],
 		(* FIXME: Expand this to cover all outcomes *)
 		other_ :> (
@@ -365,6 +400,30 @@ printTextualExprDiff[
 		]
 	]
 )
+
+(*------------------------------------*)
+
+formattedTestField[test_TestResultObject, field_?StringQ] := Module[{
+	fieldString
+},
+	Needs["CodeFormatter`" -> None];
+
+	fieldString = Replace[test[field], {
+		HoldForm[value_] :> ToString[Unevaluated @ value, InputForm],
+		other_ :> RaiseError[
+			"expected unreachable TestResultObject `` value: ``",
+			InputForm[field],
+			InputForm[other]
+		]
+	}];
+
+	CodeFormatter`CodeFormat[
+		fieldString,
+		CodeFormatter`Airiness -> 0.8
+	]
+]
+
+AddUnmatchedArgumentsHandler[formattedTestField]
 
 (*====================================*)
 
@@ -632,7 +691,11 @@ CommandPrintTerminalFormDebug[] := Module[{
 	Print[VerificationTest[1, 1]];
 	Print[VerificationTest[1, 2]];
 
-	Print[TestReport[{VerificationTest[1, 1], VerificationTest[1, 2]}]];
+	Print[TestReport[{
+		VerificationTest[1, 1],
+		VerificationTest[1, 2],
+		VerificationTest[Throw[$Failed]]
+	}]];
 
 	Print["Error with one level: ", TerminalForm @ Failure["Level1", <|
 		"MessageTemplate" -> "Level 1 error"
