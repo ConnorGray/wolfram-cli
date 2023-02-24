@@ -151,8 +151,9 @@ WithCleanup[
 		TerminalForm
 	] := Module[{
 		allSucceeded = report["AllTestsSucceeded"],
+		testsSucceededCount = report["TestsSucceededCount"],
 		testsFailedCount = report["TestsFailedCount"],
-		testsSucceededCount = report["TestsSucceededCount"]
+		testsFailedWithErrorsCount = report["TestsFailedWithErrorsCount"]
 	},
 		ToString[
 			TestReportObject[
@@ -161,14 +162,19 @@ WithCleanup[
 					TerminalStyle["FAILED", "Red"]
 				],
 				Row[{
-					TerminalStyle["OK:", "Green"],
+					TerminalStyle["ok:", "Green"],
 					" ",
 					testsSucceededCount
 				}],
 				Row[{
-					TerminalStyle["FAILED:", "Red"],
+					TerminalStyle["failed:", "Red"],
 					" ",
 					testsFailedCount
+				}],
+				Row[{
+					TerminalStyle["error:", "Red"],
+					" ",
+					testsFailedWithErrorsCount
 				}]
 			],
 			OutputForm
