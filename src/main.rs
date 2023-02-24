@@ -703,7 +703,7 @@ fn handle_custom_command(error: clap::Error) {
 }
 
 //==========================================================
-// $ wolfram dump-terminal-form-debug
+// $ wolfram print-terminal-form-debug
 //==========================================================
 
 fn handle_print_terminal_form_debug_command() {

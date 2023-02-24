@@ -19,7 +19,7 @@ CommandPacletTest::usage = "Handle the command `$ wolfram paclet test`."
 
 CommandHandleCustom::usage = "Handle custom subcommands defined by \"WolframCLI\" paclet extensions."
 
-CommandPrintTerminalFormDebug::usage = "Handle the command `$ wolfram dump-terminal-form-debug`."
+CommandPrintTerminalFormDebug::usage = "Handle the command `$ wolfram print-terminal-form-debug`."
 
 Begin["`Private`"]
 
