@@ -550,7 +550,7 @@ CommandPacletDoc[
 CommandHandleCustom[
 	(* All command-line arguments. *)
 	cliArgs: {___?StringQ}
-] := CatchRaised @ Module[{
+] := Handle[_Failure] @ Module[{
 	subcommand,
 	paclets,
 	paclet,
