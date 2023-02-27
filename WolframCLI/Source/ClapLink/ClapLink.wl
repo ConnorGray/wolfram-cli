@@ -41,6 +41,7 @@ elaborateClapArgs[expr_] :=
 	ReplaceAll[expr, {
 		ClapArg[name_?StringQ] :> ClapArg[name, "Set"],
 		arg:ClapArg[name_?StringQ, action_?ArgActionQ] :> arg,
+		(* Canonicalize the 3rd argument. *)
 		ClapArg[
 			name_?StringQ,
 			action_?StringQ,

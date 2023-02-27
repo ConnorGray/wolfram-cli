@@ -71,6 +71,58 @@ With[{
 ]
 
 (*-------------------------------------*)
+(* Test boolean flags argument parsing *)
+(*-------------------------------------*)
+
+With[{
+	parser = ClapCommand["foo", {
+		ClapArg["quiet", "SetTrue", {"Short", "Long"}]
+	}]
+},
+	VerificationTest[
+		ClapParse[{"foo"}, parser]
+		,
+		{{"foo", <| "quiet" -> False |>}}
+	];
+
+	VerificationTest[
+		ClapParse[{"foo", "-q"}, parser]
+		,
+		{{"foo", <| "quiet" -> True |>}}
+	];
+
+	VerificationTest[
+		ClapParse[{"foo", "--quiet"}, parser]
+		,
+		{{"foo", <| "quiet" -> True |>}}
+	];
+]
+
+With[{
+	parser = ClapCommand["foo", {
+		ClapArg["bar", "SetFalse", {"Short", "Long"}]
+	}]
+},
+	VerificationTest[
+		ClapParse[{"foo"}, parser]
+		,
+		{{"foo", <| "bar" -> True |>}}
+	];
+
+	VerificationTest[
+		ClapParse[{"foo", "-b"}, parser]
+		,
+		{{"foo", <| "bar" -> False |>}}
+	];
+
+	VerificationTest[
+		ClapParse[{"foo", "--bar"}, parser]
+		,
+		{{"foo", <| "bar" -> False |>}}
+	];
+]
+
+(*-------------------------------------*)
 (* Test subcommand parsing             *)
 (*-------------------------------------*)
 

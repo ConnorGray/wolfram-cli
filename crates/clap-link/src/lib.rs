@@ -1,5 +1,7 @@
 mod from_expr;
 
+use std::panic::{self, AssertUnwindSafe};
+
 use wolfram_library_link::{
 	self as wll,
 	expr::{Expr, Symbol},
@@ -176,15 +178,28 @@ fn arg_matches_to_expr(command_name: &str, matches: &clap::ArgMatches) -> Expr {
 	for id in matches.ids() {
 		let id = id.as_str();
 
+		// FIXME:
+		//     This uses of catch_unwind() below are necessary as a workaround
+		//     for the fact that there are no try_get_count() and
+		//     try_get_flag() methods on ArgMatches.
+		//
+		//     Fix this properly by either recording the ArgAction so that we
+		//     can directly call the appropriate method, or submit a PR adding
+		//     the necessary try_*() methods into clap.
 		let value: Expr =
 			if let Ok(Some(values)) = matches.try_get_many::<String>(id) {
 				let values = values.map(Expr::string).collect();
 				Expr::list(values)
-			} else {
-				// FIXME: This `else` isn't always correct. E.g. what about
-				//        boolean flag arguments?
-				let count = matches.get_count(id);
+			} else if let Ok(count) =
+				panic::catch_unwind(AssertUnwindSafe(|| matches.get_count(id)))
+			{
 				Expr::from(count)
+			} else if let Ok(is_set) =
+				panic::catch_unwind(AssertUnwindSafe(|| matches.get_flag(id)))
+			{
+				Expr::from(is_set)
+			} else {
+				panic!("unknown argument type: {id}")
 			};
 
 		arg_values.push(Expr::rule(Expr::string(id), value));
