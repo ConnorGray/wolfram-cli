@@ -1,5 +1,7 @@
 BeginPackage["ConnorGray`WolframCLI`"]
 
+Needs["GeneralUtilities`" -> "GU`"]
+
 (*-------------------------------------------------*)
 (* Utilities for writing command handler functions *)
 (*-------------------------------------------------*)
@@ -7,6 +9,11 @@ BeginPackage["ConnorGray`WolframCLI`"]
 TerminalStyle::usage = "TerminalStyle[expr, style] styles expr using the style ANSI color directive."
 
 TerminalForm::usage = "TerminalForm[expr] prints as a character-terminal representation of expr."
+
+GU`SetUsage[CommandLineParse, "
+CommandLineParse[args$, rules$] attempts 
+"]
+CommandLineParse::us
 
 (*------------------------------------*)
 (* Built-in command handler functions *)

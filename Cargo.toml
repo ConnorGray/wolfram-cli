@@ -1,17 +1,5 @@
-[package]
-name = "wolfram-cli"
-version = "0.1.0"
-edition = "2021"
-authors = ["Connor Gray <code@connorgray.com>"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-clap = { version = "4.0.18", features = ["derive"] }
-clap-markdown = { version = "0.1.0" }
-colored = "2.0.0"
-
-wolfram-app-discovery = "0.4.1"
-wstp = "0.2.6"
-wolfram-expr = "0.1.2"
-wolfram-client = { git = "https://github.com/ConnorGray/wolfram-client.git" }
+[workspace]
+members = [
+    "crates/wolfram-cli",
+    "crates/clap-link"
+]
