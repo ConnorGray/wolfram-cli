@@ -14,6 +14,12 @@ $ ./scripts/install-paclet.wls
 $ cargo install --path .
 ```
 
+#### Run the WolframCLI library tests
+
+```shell
+$ wolfram-cli paclet test ./build/ConnorGray__WolframCLI ./Tests
+```
+
 #### Debug TerminalForm output
 
 ```
