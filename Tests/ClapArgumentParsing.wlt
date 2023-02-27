@@ -151,6 +151,15 @@ With[{
 			{"bar", <| "file" -> {"TheFile.nb"} |>}
 		}
 	];
+
+	VerificationTest[
+		ClapParse[{"foo", "-v", "bar", "TheFile.nb"}, parser]
+		,
+		{
+			{"foo", <| "verbose" -> 1 |>},
+			{"bar", <| "file" -> {"TheFile.nb"} |>}
+		}
+	];
 ]
 
 (*=====================================*)
