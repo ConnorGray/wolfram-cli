@@ -10,11 +10,6 @@ TerminalStyle::usage = "TerminalStyle[expr, style] styles expr using the style A
 
 TerminalForm::usage = "TerminalForm[expr] prints as a character-terminal representation of expr."
 
-GU`SetUsage[CommandLineParse, "
-CommandLineParse[args$, rules$] attempts 
-"]
-CommandLineParse::us
-
 (*------------------------------------*)
 (* Built-in command handler functions *)
 (*------------------------------------*)
