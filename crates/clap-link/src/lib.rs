@@ -141,20 +141,23 @@ fn clap_parse(args: Vec<Expr>) -> Expr {
 	let command = ClapCommand::from_expr(&args[1]).unwrap();
 	let command: clap::Command = command.to_clap();
 
+	//
+	// Parse the input CLI arguments using the specified command
+	//
+
 	let matches = match command.clone().try_get_matches_from(&cli_args) {
 		Ok(matches) => matches,
 		Err(err) => {
-			return {
-				Expr::normal(
-					Symbol::new("System`Failure"),
-					vec![
-						Expr::string("ClapError"),
-						Expr::string(err.to_string()),
-					],
-				)
-			}
+			return Expr::normal(
+				Symbol::new("System`Failure"),
+				vec![Expr::string("ClapError"), Expr::string(err.to_string())],
+			)
 		},
 	};
+
+	//
+	// Convert the argument matches back into expressions
+	//
 
 	let mut command_match_list = Vec::new();
 
@@ -210,7 +213,3 @@ fn arg_matches_to_expr(command_name: &str, matches: &clap::ArgMatches) -> Expr {
 
 	Expr::list(vec![Expr::string(command_name), arg_values])
 }
-
-//======================================
-// Types
-//======================================

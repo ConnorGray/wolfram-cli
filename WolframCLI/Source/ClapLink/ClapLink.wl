@@ -3,13 +3,28 @@ BeginPackage["ConnorGray`ClapLink`"]
 Needs["GeneralUtilities`" -> "GU`"]
 
 GU`SetUsage[ClapCommand, "
-ClapCommand[name$, args$, subcommands$]
+ClapCommand[name$, arguments$] represents a command-line command with the specified args$.
+ClapCommand[name$, arguments$, subcommands$] represents a command-line command with the specified args$ and subcommands$.
+
+arguments$ must be a list of ClapArg[\[Ellipsis]].
+
+If specified, subcommands$ must be a list of ClapCommand[\[Ellipsis]].
 "]
 
-ClapArg[ClapArg, "
-ClapArg[name$]
-ClapArg[name$, action$]
-ClapArg[name$, action$, flag$] represents an argument with a named flag.
+GU`SetUsage[ClapArg, "
+ClapArg[name$] represents a positional command-line argument.
+ClapArg[name$, action$] represents a positional argument whose values are processed as specified by action$.
+ClapArg[name$, action$, flag$] represents an optional argument specified with a named flag.
+
+action$ must be a string that names one of the clap::ArgAction enum variants.
+
+If flag$ is either \"Short\", \"Long\", or the list {\"Short\", \"Long\"}, the
+specified argument is optional, and must be specified using the syntax for
+short ('-X') and long ('--XXX') options, respectively.
+
+Specify flag$ as \"Short\" -> \"char$\", or \"Long\" -> \"\[Ellipsis]$\" to
+override the default short and long option names, which are otherwise,
+respectively, the same as the first character in name$, and the same as name$.
 "]
 
 ClapArg[ClapParse, "
