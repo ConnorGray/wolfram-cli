@@ -30,6 +30,35 @@ With[{
 	];
 ]
 
+(*--------------------------------------------------------------------*)
+(* Test positional argument parsing with multiple non-required args   *)
+(*--------------------------------------------------------------------*)
+
+With[{
+	parser = ClapCommand["foo", {
+		ClapArg["x"],
+		ClapArg["y"]
+	}]
+},
+	VerificationTest[
+		ClapParse[{"foo"}, parser]
+		,
+		{{"foo", <||>}}
+	];
+
+	VerificationTest[
+		ClapParse[{"foo", "5"}, parser]
+		,
+		{{"foo", <| "x" -> {"5"}|>}}
+	];
+
+	VerificationTest[
+		ClapParse[{"foo", "5", "10"}, parser]
+		,
+		{{"foo", <| "x" -> {"5"}, "y" -> {"10"} |>}}
+	];
+]
+
 (*-------------------------------------*)
 (* Test counted flags argument parsing *)
 (*-------------------------------------*)
