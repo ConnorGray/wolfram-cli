@@ -12,13 +12,13 @@ With[{
 	VerificationTest[
 		ClapParse[{"foo"}, parser]
 		,
-		{{"foo", <||>}}
+		{{"foo", <| "x" -> Missing[] |>}}
 	];
 
 	VerificationTest[
 		ClapParse[{"foo", "5"}, parser]
 		,
-		{{"foo", <| "x" -> {"5"}|>}}
+		{{"foo", <| "x" -> "5"|>}}
 	];
 
 	VerificationTest[
@@ -43,19 +43,19 @@ With[{
 	VerificationTest[
 		ClapParse[{"foo"}, parser]
 		,
-		{{"foo", <||>}}
+		{{"foo", <| "x" -> Missing[], "y" -> Missing[] |>}}
 	];
 
 	VerificationTest[
 		ClapParse[{"foo", "5"}, parser]
 		,
-		{{"foo", <| "x" -> {"5"}|>}}
+		{{"foo", <| "x" -> "5", "y" -> Missing[] |>}}
 	];
 
 	VerificationTest[
 		ClapParse[{"foo", "5", "10"}, parser]
 		,
-		{{"foo", <| "x" -> {"5"}, "y" -> {"10"} |>}}
+		{{"foo", <| "x" -> "5", "y" -> "10" |>}}
 	];
 ]
 
@@ -177,7 +177,7 @@ With[{
 		,
 		{
 			{"foo", <| "verbose" -> 0 |>},
-			{"bar", <| "file" -> {"TheFile.nb"} |>}
+			{"bar", <| "file" -> "TheFile.nb" |>}
 		}
 	];
 
@@ -186,7 +186,7 @@ With[{
 		,
 		{
 			{"foo", <| "verbose" -> 1 |>},
-			{"bar", <| "file" -> {"TheFile.nb"} |>}
+			{"bar", <| "file" -> "TheFile.nb" |>}
 		}
 	];
 ]

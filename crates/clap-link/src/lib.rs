@@ -1,6 +1,6 @@
 mod from_expr;
 
-use std::panic::{self, AssertUnwindSafe};
+use std::collections::BTreeMap;
 
 use wolfram_library_link::{
 	self as wll,
@@ -141,6 +141,10 @@ fn clap_parse(args: Vec<Expr>) -> Expr {
 	let command = ClapCommand::from_expr(&args[1]).unwrap();
 	let command: clap::Command = command.to_clap();
 
+	// Save argument metadata for later use in extracting argument match values.
+	let arg_metadata: BTreeMap<CommandPath, Vec<ArgMetadata>> =
+		extract_arg_metadata(&command);
+
 	//
 	// Parse the input CLI arguments using the specified command
 	//
@@ -161,49 +165,62 @@ fn clap_parse(args: Vec<Expr>) -> Expr {
 
 	let mut command_match_list = Vec::new();
 
+	let mut command_path = vec![command.get_name().to_owned()];
 	let mut matches = &matches;
 
-	command_match_list.push(arg_matches_to_expr(command.get_name(), matches));
+	command_match_list.push(arg_matches_to_expr(
+		command.get_name(),
+		&arg_metadata[&command_path],
+		matches,
+	));
 
 	while let Some((subcommand_name, subcommand_matches)) = matches.subcommand()
 	{
-		command_match_list
-			.push(arg_matches_to_expr(subcommand_name, subcommand_matches));
+		command_path.push(subcommand_name.to_owned());
+
+		command_match_list.push(arg_matches_to_expr(
+			subcommand_name,
+			&arg_metadata[&command_path],
+			subcommand_matches,
+		));
+
 		matches = subcommand_matches;
 	}
 
 	Expr::list(command_match_list)
 }
 
-fn arg_matches_to_expr(command_name: &str, matches: &clap::ArgMatches) -> Expr {
+fn arg_matches_to_expr(
+	command_name: &str,
+	arg_metadata: &[ArgMetadata],
+	matches: &clap::ArgMatches,
+) -> Expr {
 	let mut arg_values = Vec::new();
 
-	for id in matches.ids() {
+	// for id in matches.ids() {
+	for ArgMetadata { id, action } in arg_metadata {
 		let id = id.as_str();
 
-		// FIXME:
-		//     This uses of catch_unwind() below are necessary as a workaround
-		//     for the fact that there are no try_get_count() and
-		//     try_get_flag() methods on ArgMatches.
-		//
-		//     Fix this properly by either recording the ArgAction so that we
-		//     can directly call the appropriate method, or submit a PR adding
-		//     the necessary try_*() methods into clap.
-		let value: Expr =
-			if let Ok(Some(values)) = matches.try_get_many::<String>(id) {
-				let values = values.map(Expr::string).collect();
-				Expr::list(values)
-			} else if let Ok(count) =
-				panic::catch_unwind(AssertUnwindSafe(|| matches.get_count(id)))
-			{
-				Expr::from(count)
-			} else if let Ok(is_set) =
-				panic::catch_unwind(AssertUnwindSafe(|| matches.get_flag(id)))
-			{
-				Expr::from(is_set)
-			} else {
-				panic!("unknown argument type: {id}")
-			};
+		let missing = Expr::normal(Symbol::new("System`Missing"), vec![]);
+
+		let value: Expr = match action {
+			clap::ArgAction::Set => matches
+				.get_one::<String>(id)
+				.map(Expr::string)
+				.unwrap_or(missing),
+			clap::ArgAction::Append => matches
+				.get_many::<String>(id)
+				.map(|values| Expr::list(values.map(Expr::string).collect()))
+				.unwrap_or(missing),
+			clap::ArgAction::SetTrue | clap::ArgAction::SetFalse => {
+				Expr::from(matches.get_flag(id))
+			},
+			clap::ArgAction::Count => Expr::from(matches.get_count(id)),
+			clap::ArgAction::Help | clap::ArgAction::Version => {
+				panic!("unsupported special ArgAction: {action:?}")
+			},
+			other => panic!("unhandled clap argument action kind: {other:?}"),
+		};
 
 		arg_values.push(Expr::rule(Expr::string(id), value));
 	}
@@ -212,4 +229,48 @@ fn arg_matches_to_expr(command_name: &str, matches: &clap::ArgMatches) -> Expr {
 		Expr::normal(Symbol::new("System`Association"), arg_values);
 
 	Expr::list(vec![Expr::string(command_name), arg_values])
+}
+
+//-------------------------------------
+
+/// Information saved from an [`Arg`][clap::Arg] used to lookup argument matches
+/// in [`ArgMatches`][clap::ArgMatches].
+#[derive(Debug)]
+struct ArgMetadata {
+	id: clap::Id,
+	action: clap::ArgAction,
+}
+
+/// A sequence of command/subcommands in a hierarchy. E.g. `["wolfram", "paclet", "test"]`.
+type CommandPath = Vec<String>;
+
+fn extract_arg_metadata(
+	command: &clap::Command,
+) -> BTreeMap<CommandPath, Vec<ArgMetadata>> {
+	fn build_arg_metadata(
+		data: &mut BTreeMap<Vec<String>, Vec<ArgMetadata>>,
+		parent_command_path: &[String],
+		command: &clap::Command,
+	) {
+		let mut command_path = parent_command_path.to_vec();
+		command_path.push(command.get_name().to_owned());
+
+		let metadata: Vec<ArgMetadata> = command
+			.get_arguments()
+			.map(|arg| ArgMetadata {
+				id: arg.get_id().clone(),
+				action: arg.get_action().clone(),
+			})
+			.collect();
+
+		data.insert(command_path.clone(), metadata);
+
+		for subcommand in command.get_subcommands() {
+			build_arg_metadata(data, &command_path, subcommand)
+		}
+	}
+
+	let mut data = BTreeMap::new();
+	build_arg_metadata(&mut data, &[], command);
+	data
 }
