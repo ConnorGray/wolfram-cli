@@ -191,6 +191,89 @@ With[{
 	];
 ]
 
+(*--------------------------------*)
+(* Test ClapCommand settings      *)
+(*--------------------------------*)
+
+(* Test "ArgRequiredElseHelp" setting. *)
+With[{
+	parser = ClapCommand["foo", {}, {
+		ClapCommand["bar", {}],
+		ClapCommand["baz", {}]
+	}, <| "ArgRequiredElseHelp" -> True |>]
+},
+	VerificationTest[
+		ClapParse[{"foo"}, parser]
+		,
+		Failure["ClapError", <|
+			"MessageTemplate" -> "Usage: foo [COMMAND]\n\nCommands:\n  bar   \n  baz   \n  help  Print this message or the help of the given subcommand(s)\n\nOptions:\n  -h, --help  Print help\n"
+		|>]
+	];
+
+	VerificationTest[
+		ClapParse[{"foo", "bar"}, parser]
+		,
+		{{"foo", <||>}, {"bar", <||>}}
+	]
+]
+
+(*--------------------------------*)
+(* Test the 'greeting.wls' parser *)
+(*--------------------------------*)
+
+With[{
+	parser = ClapCommand["greeting", {}, {
+		ClapCommand["say-hello", {
+			ClapArg["name"],
+			ClapArg["language", "Set", {"Short", "Long"}]
+		}]
+	}, <| "ArgRequiredElseHelp" -> True |>]
+},
+	VerificationTest[
+		ClapParse[{"greeting"}, parser]
+		,
+		Failure["ClapError", <|
+			"MessageTemplate" -> "Usage: greeting [COMMAND]\n\nCommands:\n  say-hello  \n  help       Print this message or the help of the given subcommand(s)\n\nOptions:\n  -h, --help  Print help\n"
+		|>]
+	];
+
+	VerificationTest[
+		ClapParse[StringSplit @ "greeting say-hello", parser]
+		,
+		{
+			{"greeting", <||>},
+			{"say-hello", <| "name" -> Missing[], "language" -> Missing[] |>}
+		}
+	];
+
+	VerificationTest[
+		ClapParse[StringSplit @ "greeting say-hello Foo", parser]
+		,
+		{
+			{"greeting", <||>},
+			{"say-hello", <| "name" -> "Foo", "language" -> Missing[] |>}
+		}
+	];
+
+	VerificationTest[
+		ClapParse[StringSplit @ "greeting say-hello --language Spanish", parser]
+		,
+		{
+			{"greeting", <||>},
+			{"say-hello", <| "name" -> Missing[], "language" -> "Spanish" |>}
+		}
+	];
+
+	VerificationTest[
+		ClapParse[StringSplit @ "greeting say-hello Foo --language Spanish", parser]
+		,
+		{
+			{"greeting", <||>},
+			{"say-hello", <| "name" -> "Foo", "language" -> "Spanish" |>}
+		}
+	];
+]
+
 (*=====================================*)
 
 elaborateClapArgs = ConnorGray`ClapLink`Private`elaborateClapArgs

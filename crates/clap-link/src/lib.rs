@@ -17,6 +17,11 @@ pub(crate) struct ClapCommand {
 	command_name: String,
 	args: Vec<ClapArg>,
 	subcommands: Option<Vec<ClapCommand>>,
+	settings: Option<ClapCommandSettings>,
+}
+
+pub(crate) struct ClapCommandSettings {
+	arg_required_else_help: Option<bool>,
 }
 
 pub(crate) struct ClapArg {
@@ -48,6 +53,7 @@ impl ClapCommand {
 			command_name,
 			args,
 			subcommands,
+			settings,
 		} = self;
 
 		let args = args.into_iter().map(ClapArg::to_clap);
@@ -59,9 +65,21 @@ impl ClapCommand {
 			None => Vec::new(),
 		};
 
-		clap::Command::new(clap::Id::from(command_name))
+		let mut command = clap::Command::new(clap::Id::from(command_name))
 			.args(args)
-			.subcommands(subcommands)
+			.subcommands(subcommands);
+
+		if let Some(settings) = settings {
+			let ClapCommandSettings {
+				arg_required_else_help,
+			} = *settings;
+
+			if let Some(value) = arg_required_else_help {
+				command = command.arg_required_else_help(value);
+			}
+		}
+
+		command
 	}
 }
 

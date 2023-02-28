@@ -1,6 +1,6 @@
 use wolfram_library_link::expr::{symbol::SymbolRef, Expr, Normal, Symbol};
 
-use crate::{ClapArg, ClapCommand, FlagSetting};
+use crate::{ClapArg, ClapCommand, ClapCommandSettings, FlagSetting};
 
 //======================================
 // FromExpr implementations
@@ -17,14 +17,18 @@ impl FromExpr for ClapCommand {
 			SymbolRef::try_new("ConnorGray`ClapLink`ClapCommand").unwrap(),
 		)?;
 
-		let (command_name, args, subcommands) = match elements {
-			[command_name, args] => (command_name, args, None),
+		let (command_name, args, subcommands, settings) = match elements {
+			[command_name, args] => (command_name, args, None, None),
 			[command_name, args, subcommands] => {
-				(command_name, args, Some(subcommands))
+				(command_name, args, Some(subcommands), None)
+			},
+			[command_name, args, subcommands, settings] => {
+				(command_name, args, Some(subcommands), Some(settings))
 			},
 			_ => {
 				return Err(format!(
-					"ClapCommand has wrong number of arguments."
+					"ClapCommand has wrong number of arguments: {}.",
+					elements.len()
 				))
 			},
 		};
@@ -61,10 +65,44 @@ impl FromExpr for ClapCommand {
 			None => None,
 		};
 
+		let settings = match settings {
+			Some(settings) => {
+				let rules = try_normal_with_head(
+					settings,
+					SymbolRef::try_new("System`Association").unwrap(),
+				)?;
+
+				let mut settings = ClapCommandSettings {
+					arg_required_else_help: None,
+				};
+
+				for rule in rules {
+					let [lhs, rhs] = try_normal_array_with_head(
+						rule,
+						SymbolRef::try_new("System`Rule").unwrap(),
+					)?;
+
+					match lhs.try_as_str() {
+						Some("ArgRequiredElseHelp") => {
+							let bool = rhs.try_as_bool().expect(
+								"expected boolean ClapCommand setting value",
+							);
+							settings.arg_required_else_help = Some(bool);
+						},
+						_ => panic!("unknown ClapCommand setting name: {lhs}"),
+					}
+				}
+
+				Some(settings)
+			},
+			None => None,
+		};
+
 		Ok(ClapCommand {
 			command_name,
 			args,
 			subcommands,
+			settings,
 		})
 	}
 }
