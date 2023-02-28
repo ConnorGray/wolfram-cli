@@ -27,8 +27,8 @@ override the default short and long option names, which are otherwise,
 respectively, the same as the first character in name$, and the same as name$.
 "]
 
-ClapArg[ClapParse, "
-ClapParse[args$, command$]
+GU`SetUsage[ClapParse, "
+ClapParse[args$, command$] parses the command line arguments in args$ using command$.
 "]
 
 Begin["`Private`"]
