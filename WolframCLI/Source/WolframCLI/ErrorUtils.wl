@@ -7,6 +7,8 @@ AddUnmatchedArgumentsHandler::usage = "AddUnmatchedArgumentsHandler[symbol] adds
 
 Begin["`Private`"]
 
+CreateErrorType[WolframCLIError, {}]
+
 (*========================================================*)
 
 RaiseError[args___] :=
