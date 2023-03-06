@@ -70,9 +70,9 @@ pacletFile = result["PacletArchive"];
 result = PacletInstall[pacletFile, ForceVersionInstall -> True];
 
 If[MatchQ[result, _PacletObject],
-	Print["BUILD RESULT: PacletObject[..]"]
+	Print["INSTALL RESULT: PacletObject[..]"]
 	,
-	Print["BUILD RESULT: ", CodeFormat @ ToString[result, InputForm]];
+	Print["INSTALL RESULT: ", CodeFormat @ ToString[result, InputForm]];
 ]
 
 If[FailureQ[result],
