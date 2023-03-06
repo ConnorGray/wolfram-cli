@@ -141,9 +141,10 @@ WithCleanup[
 		TerminalForm
 	] := Replace[outcome, {
 		(* "Failure" :> ToString[TerminalStyle[test, Red]], *)
-		"Failure" :> ToString[TestResultObject[TerminalStyle["FAILED", "Red"]], ScriptForm],
+		"Failure" :> ToString[TestResultObject[TerminalStyle["Failure", "Red"]], ScriptForm],
 		"Success" :> ToString[TestResultObject[TerminalStyle["OK", "Green"]], ScriptForm],
-		"Error"   :> ToString[TestResultObject[TerminalStyle["ERROR", "Red", Underlined]], ScriptForm],
+		"Error"   :> ToString[TestResultObject[TerminalStyle["Error", "Red", Underlined]], ScriptForm],
+		"MessagesFailure" :> ToString[TestResultObject[TerminalStyle["MessagesFailure", "Yellow"]], ScriptForm],
 		_ :> ToString[test]
 	}];
 

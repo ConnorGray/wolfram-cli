@@ -365,6 +365,29 @@ printTestResult[test_TestResultObject] := Module[{},
 				)
 			}];
 		],
+		"MessagesFailure" :> Module[{
+			formattedInput
+		},
+			formattedInput = formattedTestField[test, "Input"];
+
+			Print[
+				Format[test, TerminalForm],
+				" -- ",
+				TerminalStyle["expected", "Red", Italic],
+				" | ",
+				TerminalStyle["actual", "Green", Italic]
+			];
+
+			Print[
+				"| ", TerminalStyle["Input:", Underlined], " ", TerminalStyle[formattedInput, "Blue"]
+			];
+
+			(* Strip the HoldForm wrapper -- this shouldn't be necessary in almost all cases. *)
+			a = Replace[test["ExpectedMessages"], HoldForm[x_] :> x];
+			b = Replace[test["ActualMessages"], HoldForm[x_] :> x];
+
+			printTextualExprDiff[a, b]
+		],
 		(* FIXME: Expand this to cover all outcomes *)
 		other_ :> (
 			Print["Unhandled test failure outcome: ", InputForm[other]];
