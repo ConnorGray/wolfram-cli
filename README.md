@@ -30,7 +30,7 @@ Finally, install the `wolfram-cli` executable by invoking
 [`cargo`](https://doc.rust-lang.org/cargo/):
 
 ```shell
-$ cargo install --path ./wolfram-cli
+$ cargo install --path ./wolfram-cli/crates/wolfram-cli
 ```
 
 Verify the installation by executing:
