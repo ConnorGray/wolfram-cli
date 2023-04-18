@@ -38,7 +38,8 @@ Module[{
 	If[FileExistsQ[dest],
 		DeleteFile[dest];
 	];
-
+	
+	CreateDirectory[FileNameDrop[dest]];
 	CopyFile[source, dest]
 ]
 
