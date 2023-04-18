@@ -24,7 +24,13 @@ If[FileNameTake[$repositoryDir] =!= "wolfram-cli",
 (* Copy the compiled dynamic library into the paclet LibraryResources directory. *)
 (*-------------------------------------------------------------------------------*)
 
-EchoEvaluation @ RunProcess[{"cargo", "build"}]
+WithCleanup[
+	SetDirectory[$repositoryDir]
+	,
+	EchoEvaluation @ RunProcess[{"cargo", "build"}]
+	,
+	ResetDirectory[]
+]
 
 (*-------------------------------------------------------------------------------*)
 (* Copy the compiled dynamic library into the paclet LibraryResources directory. *)
@@ -37,6 +43,13 @@ Module[{
 },
 	If[FileExistsQ[dest],
 		DeleteFile[dest];
+	];
+
+	(* Ensure that the parent LibraryResources/<$SystemID>/ directory exists. *)
+	With[{parent = FileNameDrop[dest]},
+		If[!DirectoryQ[parent],
+			CreateDirectory[parent];
+		];
 	];
 
 	CopyFile[source, dest]
