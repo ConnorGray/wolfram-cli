@@ -414,10 +414,20 @@ printTextualExprDiff[
 
 		Scan[
 			Replace[{
-				common:{__?StringQ} :> Print["> ", StringRiffle[common, "\n"]],
+				common:{__?StringQ} :> (
+					(* If the diff is large, elide everything but the first and
+					   last 10 lines. *)
+					If[Length[common] > 20,
+						Print["  ", StringRiffle[Take[common, 10], "\n"]]
+						Print[TerminalStyle["<<" <> ToString[Length[common] - 20] <> ">>", "Blue"]];
+						Print["  ", StringRiffle[Take[common, -10], "\n"]]
+						,
+						Print["  ", StringRiffle[common, "\n"]]
+					]
+				),
 				{expected:{___?StringQ}, got:{___?StringQ}} :> (
-					Print[TerminalStyle["> ", "Red"], TerminalStyle[StringRiffle[expected, "\n"], "Red"]];
-					Print[TerminalStyle["> ", "Green"], TerminalStyle[StringRiffle[got, "\n"], "Green"]];
+					Print[TerminalStyle["- ", "Red"], TerminalStyle[StringRiffle[expected, "\n"], "Red"]];
+					Print[TerminalStyle["+ ", "Green"], TerminalStyle[StringRiffle[got, "\n"], "Green"]];
 				),
 				other_ :> Throw[StringForm["Unexpected SequenceAlignment result: ``", InputForm @ other]]
 			}],
