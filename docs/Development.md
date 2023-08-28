@@ -11,7 +11,7 @@ $ ./scripts/install-paclet.wls
 #### Build and install the `$ wolfram` command-line tool
 
 ```shell
-$ cargo install --path .
+$ cargo install --path ./crates/wolfram-cli
 ```
 
 #### Run the WolframCLI library tests
