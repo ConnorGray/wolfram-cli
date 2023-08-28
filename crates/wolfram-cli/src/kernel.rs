@@ -10,7 +10,17 @@ pub fn launch_kernel() -> WolframSession {
 
 	let exe = app.kernel_executable_path().unwrap();
 
-	WolframSession::launch_kernel(&exe).expect("unable to launch WolframKernel")
+	let mut session = WolframSession::launch_kernel(&exe)
+		.expect("unable to launch WolframKernel");
+
+	if config::verbosity() >= 2 {
+		eprintln!(
+			"verbose: WolframKernel WSTP link name: {:?}",
+			session.process().link().link_name()
+		);
+	}
+
+	session
 }
 
 /// Find a suitable Wolfram Language installation
@@ -20,7 +30,7 @@ fn get_wolfram_app() -> WolframApp {
 
 	if config::verbosity() >= 1 {
 		eprintln!(
-			"info: Using Wolfram installation at: {}",
+			"verbose: Using Wolfram installation at: {}",
 			app.installation_directory().display()
 		);
 	}
