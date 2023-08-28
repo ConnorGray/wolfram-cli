@@ -22,9 +22,16 @@ use wolfram_expr::{Expr, Symbol};
 struct Cli {
 	/// Whether to log progress and debugging information
 	///
-	/// Logged information includes:
+	/// Printed information at each verbosity level includes:
 	///
-	/// * The Wolfram installation that is being used for evaluation.
+	/// **Level 1:**
+	///
+	/// - Installation directory of launched Wolfram Kernels
+	///
+	/// **Level 2:**
+	///
+	/// - WSTP link name of launched Wolfram Kernels
+	// TODO(feature): WolframKernel process ID.
 	#[arg(short, long, action = clap::ArgAction::Count)]
 	verbosity: u8,
 
