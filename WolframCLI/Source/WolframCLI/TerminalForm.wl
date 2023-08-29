@@ -5,7 +5,7 @@ LoadTerminalForm::usage = "LoadTerminalForm[] adds TerminalForm to $OutputForms 
 Begin["`Private`"]
 
 Needs["ConnorGray`WolframCLI`"]
-Needs["ConnorGray`WolframCLI`ErrorUtils`"]
+Needs["ConnorGray`WolframCLI`Errors`"]
 
 $supported = {
 	Failure,
@@ -89,7 +89,8 @@ styleEscapeCode[style_] := Replace[style, {
 	"SlowBlink" | "Blink" -> 5,
 	"FastBlink" -> 6,
 
-	other_ :> RaiseError[
+	other_ :> Raise[
+		WolframCLIError,
 		"Style directive cannot be represented as ANSI escape code: ``",
 		InputForm[other]
 	]
