@@ -1,5 +1,7 @@
 BeginPackage["ConnorGray`WolframCLI`"]
 
+PacletInstall /@ PacletObject["ConnorGray/WolframCLI"]["Dependencies"]
+
 Needs["GeneralUtilities`" -> "GU`"]
 
 (*-------------------------------------------------*)
@@ -26,7 +28,7 @@ CommandPrintTerminalFormDebug::usage = "Handle the command `$ wolfram print-term
 Begin["`Private`"]
 
 Needs["ConnorGray`WolframCLI`"]
-Needs["ConnorGray`WolframCLI`ErrorUtils`"]
+Needs["ConnorGray`WolframCLI`Errors`"]
 Needs["ConnorGray`WolframCLI`TerminalForm`"]
 
 (* FIXME: Remove this automatic initialization. *)
@@ -164,7 +166,7 @@ CommandPacletTest[
 						Values[testsDirs]
 					),
 					dir_?DirectoryQ :> {dir},
-					other_ :> RaiseError["unreachable testsPath value: ``", other]
+					other_ :> Raise[WolframCLIError, "unreachable testsPath value: ``", other]
 				}];
 
 				RaiseAssert[
@@ -179,7 +181,8 @@ CommandPacletTest[
 			),
 			_ /; FileType[testsPath] === File :> {testsPath},
 			other_ :> (
-				RaiseError[
+				Raise[
+					WolframCLIError,
 					"invalid testsPath value: must be a file, directory, or Automatic: ``",
 					InputForm[testsPath]
 				]
@@ -445,7 +448,8 @@ formattedTestField[test_TestResultObject, field_?StringQ] := Module[{
 
 	fieldString = Replace[test[field], {
 		HoldForm[value_] :> ToString[Unevaluated @ value, InputForm],
-		other_ :> RaiseError[
+		other_ :> Raise[
+			WolframCLIError,
 			"expected unreachable TestResultObject `` value: ``",
 			InputForm[field],
 			InputForm[other]
@@ -458,7 +462,7 @@ formattedTestField[test_TestResultObject, field_?StringQ] := Module[{
 	]
 ]
 
-AddUnmatchedArgumentsHandler[formattedTestField]
+SetFallthroughError[formattedTestField]
 
 (*====================================*)
 
@@ -630,17 +634,17 @@ CommandHandleCustom[
 			Print["ambiguity warning: multiple paclets provide a handler for subcommand: ", paclets];
 			first
 		),
-		other_ :> RaiseError["Unexpected paclet list form: ``", InputForm[paclets]]
+		other_ :> Raise[WolframCLIError, "Unexpected paclet list form: ``", InputForm[paclets]]
 	}];
 
 	ext = Replace[PacletTools`PacletExtensions[paclet, "WolframCLI"], {
-		{} :> RaiseError["Unreachable: paclet has no WolframCLI extensions"],
+		{} :> Raise[WolframCLIError, "Unreachable: paclet has no WolframCLI extensions"],
 		{ext_} :> ext,
 		exts:{__} :> (
 			Print["ambiguity warning: multiple WolframCLI extensions provide a handler for subcommand: ", InputForm[exts]];
 			first
 		),
-		other_ :> RaiseError["Unexpected PacletExtensions result: ``", InputForm[other]]
+		other_ :> Raise[WolframCLIError, "Unexpected PacletExtensions result: ``", InputForm[other]]
 	}];
 
 	(*--------------------------------------------------------------------------*)
@@ -664,11 +668,12 @@ CommandHandleCustom[
 
 			Symbol[handlerSymbol0]
 		],
-		{"WolframCLI", metadata_?AssociationQ} :> RaiseError[
+		{"WolframCLI", metadata_?AssociationQ} :> Raise[
+			WolframCLIError,
 			"\"WolframCLI\" extension did not have the expected fields, or they had invalid values: ``",
 			InputForm[ext]
 		],
-		other_ :> RaiseError["Unexpected extension form: ``", InputForm[other]]
+		other_ :> Raise[WolframCLIError, "Unexpected extension form: ``", InputForm[other]]
 	}];
 
 	(*--------------------------------------------*)
@@ -680,7 +685,8 @@ CommandHandleCustom[
 		failure_Failure :> (
 			Print[Format[failure, TerminalForm]]
 		),
-		other_ :> RaiseError[
+		other_ :> Raise[
+			WolframCLIError,
 			"Custom Wolfram CLI handler for subcommand `` returned unexpected result: ``",
 			InputForm[subcommand],
 			InputForm[other]
