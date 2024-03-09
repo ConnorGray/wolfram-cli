@@ -23,7 +23,7 @@ $ wolfram-cli paclet test ./build/ConnorGray__WolframCLI ./Tests
 #### Debug TerminalForm output
 
 ```
-$ wolfram print-terminal-form-debug
+$ wolfram-cli print-terminal-form-debug
 ```
 
 #### Regenerate docs/CommandLineHelp.md
