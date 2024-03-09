@@ -37,11 +37,23 @@ SetOptions[$Output, FormatType -> TerminalForm]
 
 (*====================================*)
 
+Options[CommandPacletTest] = {
+	(*
+		Maximum lines of context to include around textual diffs shown in
+		failed test results.
+	*)
+	"DiffContext" -> 10
+}
+
 (* Handle `$ wolfram paclet test` *)
 CommandPacletTest[
 	pacletDir: _?StringQ,
-	testsPath: _?StringQ | Automatic : Automatic
-] := Module[{
+	testsPath: _?StringQ | Automatic : Automatic,
+	OptionsPattern[]
+] := With[{
+	diffContext = RaiseConfirmMatch[OptionValue["DiffContext"], _?IntegerQ]
+},
+Module[{
 	result,
 	linkObj
 },
@@ -200,7 +212,7 @@ CommandPacletTest[
 
 		logger = Function[testResult,
 			summaryData[testResult["Outcome"]] += 1;
-			printTestResult[testResult];
+			printTestResult[testResult, diffContext];
 		];
 
 		logger = <|
@@ -303,19 +315,13 @@ CommandPacletTest[
 			)
 		}];
 	];
-]
+]]
 
 (*------------------------------------*)
 
-(*
-	Function with argument structure used by the
-	"Log(Success|Failure|MessagesFailure|Error)" events.
-*)
-testOutcomeLogger[test_TestResultObject] := printTestResult[test]
+SetFallthroughError[printTestResult]
 
-(*------------------------------------*)
-
-printTestResult[test_TestResultObject] := Module[{},
+printTestResult[test_TestResultObject, diffContext_?IntegerQ] := Module[{},
 	Replace[test["Outcome"], {
 		"Success" :> Print[Format[test, TerminalForm]],
 		"Failure" :> Module[{
@@ -341,7 +347,7 @@ printTestResult[test_TestResultObject] := Module[{},
 			a = Replace[test["ExpectedOutput"], HoldForm[x_] :> x];
 			b = Replace[test["ActualOutput"], HoldForm[x_] :> x];
 
-			printTextualExprDiff[a, b]
+			printTextualExprDiff[a, b, diffContext]
 		],
 		"Error" :> Module[{},
 			Print[Format[test, TerminalForm]];
@@ -389,7 +395,7 @@ printTestResult[test_TestResultObject] := Module[{},
 			a = Replace[test["ExpectedMessages"], HoldForm[x_] :> x];
 			b = Replace[test["ActualMessages"], HoldForm[x_] :> x];
 
-			printTextualExprDiff[a, b]
+			printTextualExprDiff[a, b, diffContext]
 		],
 		(* FIXME: Expand this to cover all outcomes *)
 		other_ :> (
@@ -399,9 +405,14 @@ printTestResult[test_TestResultObject] := Module[{},
 	}]
 ]
 
+(*------------------------------------*)
+
+SetFallthroughError[printTextualExprDiff]
+
 printTextualExprDiff[
 	expr1_,
-	expr2_
+	expr2_,
+	diffContext : _?IntegerQ : 10
 ] := (
 	Needs["CodeFormatter`" -> None];
 
@@ -417,17 +428,17 @@ printTextualExprDiff[
 
 		Scan[
 			Replace[{
-				common:{__?StringQ} :> (
+				common:{__?StringQ} :> Module[{context},
 					(* If the diff is large, elide everything but the first and
 					   last 10 lines. *)
-					If[Length[common] > 20,
-						Print["  ", StringRiffle[Take[common, 10], "\n"]]
-						Print[TerminalStyle["<<" <> ToString[Length[common] - 20] <> ">>", "Blue"]];
-						Print["  ", StringRiffle[Take[common, -10], "\n"]]
+					If[Length[common] > 2 * diffContext,
+						Print["  ", StringRiffle[Take[common, diffContext], "\n"]]
+						Print[TerminalStyle["<<" <> ToString[Length[common] - 2 * diffContext] <> ">>", "Blue"]];
+						Print["  ", StringRiffle[Take[common, -diffContext], "\n"]]
 						,
 						Print["  ", StringRiffle[common, "\n"]]
 					]
-				),
+				],
 				{expected:{___?StringQ}, got:{___?StringQ}} :> (
 					Print[TerminalStyle["- ", "Red"], TerminalStyle[StringRiffle[expected, "\n"], "Red"]];
 					Print[TerminalStyle["+ ", "Green"], TerminalStyle[StringRiffle[got, "\n"], "Green"]];
