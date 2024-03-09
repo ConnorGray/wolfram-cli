@@ -125,12 +125,16 @@ Run tests defined for a paclet
 
 This uses `` PacletTools`PacletTest `` to execute any tests defined by the specified paclet.
 
-**Usage:** `wolfram-cli paclet test [PACLET_DIR] [TESTS_PATH]`
+**Usage:** `wolfram-cli paclet test [OPTIONS] [PACLET_DIR] [TESTS_PATH]`
 
 ###### **Arguments:**
 
 * `<PACLET_DIR>` — Optional path to a paclet directory
 * `<TESTS_PATH>` — Optional file or directory containing tests to be run
+
+###### **Options:**
+
+* `-C`, `--diff-context <DIFF_CONTEXT>` — Lines of context to print before and after a diff in test output
 
 
 

@@ -25,3 +25,9 @@ $ wolfram-cli paclet test ./build/ConnorGray__WolframCLI ./Tests
 ```
 $ wolfram print-terminal-form-debug
 ```
+
+#### Regenerate docs/CommandLineHelp.md
+
+```
+$ cargo run -- print-all-help --markdown > docs/CommandLineHelp.md
+```
