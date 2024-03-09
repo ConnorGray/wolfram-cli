@@ -769,6 +769,11 @@ CommandPrintTerminalFormDebug[] := Module[{
 			|>]
 		|>]
 	|>]];
+
+	Print["Error with format argument: ", TerminalForm @ Failure["Level1", <|
+		"MessageTemplate" -> "The problem is in: ``",
+		"MessageParameters" -> {InputForm["Hello"]}
+	|>]];
 ]
 
 (*====================================*)

@@ -20,14 +20,25 @@ Needs["GeneralUtilities`" -> None]
 
 Needs["MUnit`"]
 
-TerminalStyle[expr_] := ToString[expr, OutputForm]
+TerminalStyle[expr_] := Replace[expr, {
+	(* Workaround bug in ToString[_Failure, OutputForm] adding extra
+	   TagBox[PaneBox[..]]] wrapper. *)
+	Failure[tag_, KeyValuePattern[{
+		"MessageTemplate" -> template_String,
+		"MessageParameters" -> params_List
+	}]] :> (
+		TemplateApply[template, params, InsertionFunction -> ToString]
+	),
+
+	other_ :> ToString[expr, OutputForm]
+}]
 
 TerminalStyle[expr_, styles0__] := Module[{
 	styles = {styles0},
 	codes,
 	ansiStyle,
 	ansiReset = "\:001b[0m",
-	exprLines = StringSplit[ToString[expr, OutputForm], "\n"]
+	exprLines = StringSplit[TerminalStyle[expr], "\n"]
 },
 	codes = Map[ToString @* styleEscapeCode, styles];
 
