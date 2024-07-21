@@ -413,42 +413,43 @@ printTextualExprDiff[
 	expr1_,
 	expr2_,
 	diffContext : _?IntegerQ : 10
-] := (
+] := Module[{
+	text1,
+	text2,
+	alignment
+},
 	Needs["CodeFormatter`" -> None];
 
-	Module[{
-		text1 = CodeFormatter`CodeFormat[ToString[expr1, InputForm], CodeFormatter`Airiness -> 0.8],
-		text2 = CodeFormatter`CodeFormat[ToString[expr2, InputForm], CodeFormatter`Airiness -> 0.8],
-		alignment
-	},
-		alignment = SequenceAlignment[
-			StringSplit[text1, "\n"],
-			StringSplit[text2, "\n"]
-		];
+	text1 = CodeFormatter`CodeFormat[ToString[expr1, InputForm], CodeFormatter`Airiness -> 0.8],
+	text2 = CodeFormatter`CodeFormat[ToString[expr2, InputForm], CodeFormatter`Airiness -> 0.8],
 
-		Scan[
-			Replace[{
-				common:{__?StringQ} :> Module[{context},
-					(* If the diff is large, elide everything but the first and
-					   last 10 lines. *)
-					If[Length[common] > 2 * diffContext,
-						Print["  ", StringRiffle[Take[common, diffContext], "\n"]]
-						Print[TerminalStyle["<<" <> ToString[Length[common] - 2 * diffContext] <> ">>", "Blue"]];
-						Print["  ", StringRiffle[Take[common, -diffContext], "\n"]]
-						,
-						Print["  ", StringRiffle[common, "\n"]]
-					]
-				],
-				{expected:{___?StringQ}, got:{___?StringQ}} :> (
-					Print[TerminalStyle["- ", "Red"], TerminalStyle[StringRiffle[expected, "\n"], "Red"]];
-					Print[TerminalStyle["+ ", "Green"], TerminalStyle[StringRiffle[got, "\n"], "Green"]];
-				),
-				other_ :> Throw[StringForm["Unexpected SequenceAlignment result: ``", InputForm @ other]]
-			}],
-			alignment
-		]
+	alignment = SequenceAlignment[
+		StringSplit[text1, "\n"],
+		StringSplit[text2, "\n"]
+	];
+
+	Scan[
+		Replace[{
+			common:{__?StringQ} :> Module[{context},
+				(* If the diff is large, elide everything but the first and
+					last 10 lines. *)
+				If[Length[common] > 2 * diffContext,
+					Print["  ", StringRiffle[Take[common, diffContext], "\n"]]
+					Print[TerminalStyle["<<" <> ToString[Length[common] - 2 * diffContext] <> ">>", "Blue"]];
+					Print["  ", StringRiffle[Take[common, -diffContext], "\n"]]
+					,
+					Print["  ", StringRiffle[common, "\n"]]
+				]
+			],
+			{expected:{___?StringQ}, got:{___?StringQ}} :> (
+				Print[TerminalStyle["- ", "Red"], TerminalStyle[StringRiffle[expected, "\n"], "Red"]];
+				Print[TerminalStyle["+ ", "Green"], TerminalStyle[StringRiffle[got, "\n"], "Green"]];
+			),
+			other_ :> Throw[StringForm["Unexpected SequenceAlignment result: ``", InputForm @ other]]
+		}],
+		alignment
 	]
-)
+]
 
 (*------------------------------------*)
 
