@@ -416,39 +416,81 @@ printTextualExprDiff[
 ] := Module[{
 	text1,
 	text2,
-	alignment
+	alignment,
+	elidedLineCount = 0,
+	limitToContext
 },
 	Needs["CodeFormatter`" -> None];
 
-	text1 = CodeFormatter`CodeFormat[ToString[expr1, InputForm], CodeFormatter`Airiness -> 0.8],
-	text2 = CodeFormatter`CodeFormat[ToString[expr2, InputForm], CodeFormatter`Airiness -> 0.8],
+	text1 = CodeFormatter`CodeFormat[ToString[expr1, InputForm], CodeFormatter`Airiness -> 0.8];
+	text2 = CodeFormatter`CodeFormat[ToString[expr2, InputForm], CodeFormatter`Airiness -> 0.8];
 
 	alignment = SequenceAlignment[
 		StringSplit[text1, "\n"],
 		StringSplit[text2, "\n"]
 	];
 
+	SetFallthroughError[limitToContext];
+
+	limitToContext[lines:{___?StringQ}] := (
+		(* Keep track of how many lines we've elided, so we can print an
+			info message saying how many lines have been elidted. *)
+		If[Length[lines] > diffContext,
+			elidedLineCount += Length[lines] - diffContext;
+		];
+
+		Take[lines, UpTo[diffContext]]
+	);
+
 	Scan[
 		Replace[{
-			common:{__?StringQ} :> Module[{context},
+			common:{__?StringQ} :> Module[{context, elided},
 				(* If the diff is large, elide everything but the first and
 					last 10 lines. *)
 				If[Length[common] > 2 * diffContext,
+					elided = Length[common] - 2 * diffContext;
+
 					Print["  ", StringRiffle[Take[common, diffContext], "\n"]]
-					Print[TerminalStyle["<<" <> ToString[Length[common] - 2 * diffContext] <> ">>", "Blue"]];
+					Print[TerminalStyle[ToString[Skeleton[elided]], "Blue"]];
 					Print["  ", StringRiffle[Take[common, -diffContext], "\n"]]
+
+					elidedLineCount += elided;
 					,
 					Print["  ", StringRiffle[common, "\n"]]
 				]
 			],
+
 			{expected:{___?StringQ}, got:{___?StringQ}} :> (
-				Print[TerminalStyle["- ", "Red"], TerminalStyle[StringRiffle[expected, "\n"], "Red"]];
-				Print[TerminalStyle["+ ", "Green"], TerminalStyle[StringRiffle[got, "\n"], "Green"]];
+				Print[
+					TerminalStyle["- ", "Red"],
+					TerminalStyle[StringRiffle[limitToContext[expected], "\n"], "Red"]
+				];
+				Print[
+					TerminalStyle["+ ", "Green"],
+					TerminalStyle[StringRiffle[limitToContext[got], "\n"], "Green"]
+				];
 			),
 			other_ :> Throw[StringForm["Unexpected SequenceAlignment result: ``", InputForm @ other]]
 		}],
 		alignment
-	]
+	];
+
+	If[elidedLineCount > 0,
+		Print[];
+		Print @ TerminalStyle[
+			StringJoin[
+				"info: Elided ",
+				ToString[elidedLineCount],
+				Pluralize[{" line.", " lines."}, elidedLineCount]
+			],
+			"Gray"
+		];
+		Print @ TerminalStyle[
+			"hint: Use `--diff-context <count>` to show more lines of output.",
+			"Gray"
+		];
+		Print[];
+	];
 ]
 
 (*------------------------------------*)
